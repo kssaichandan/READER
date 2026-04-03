@@ -129,34 +129,31 @@ This can include:
 
 ## Deploy on Render
 
-This project can be deployed on Render as a **Static Site**.
+This repo is now prepared for both common Render setups:
 
-Two easy options are available:
+- Static Site
+- Docker-based Web Service
 
-- use the included `render.yaml` as a Blueprint
-- create a Static Site manually in the Render dashboard
+### Recommended: Static Site
 
-Use these settings in the Render dashboard:
+If you create a **Static Site** on Render, use:
 
-- Service type: `Static Site`
 - Branch: `main`
-- Build command: leave empty if Render allows it
 - Publish directory: `.`
 
-Why `index.html` was added:
+`index.html` is included so the app opens correctly from the root URL.
 
-- Render static sites are served from a publish directory, and having an `index.html` at the root makes the app open directly from the site root
-- `index.html` redirects to `textbook reader.html`, so the main app file does not need to be renamed
+### If Render tries to build a Docker service
 
-Included Render file:
+If Render is creating a **Web Service** and looks for a `Dockerfile`, this repo now includes one.
 
-- `render.yaml` - optional Blueprint config for Render deployment
+That means the same repo can also deploy successfully as a Docker-based service without extra setup.
 
-If Render asks for a build command and does not allow it to be empty, use:
+Included deployment files:
 
-```text
-echo ready
-```
+- `index.html` - root entry point for static hosting
+- `render.yaml` - optional Render Blueprint config
+- `Dockerfile` - supports Docker/Web Service deployment on Render
 
 ## Good Fit For
 
@@ -175,3 +172,6 @@ echo ready
 ## File In This Repo
 
 - `textbook reader.html` - the complete application
+- `index.html` - hosting-friendly entry point
+- `render.yaml` - optional Render config
+- `Dockerfile` - Docker deployment support
