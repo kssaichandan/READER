@@ -84,7 +84,7 @@
     .drop:hover i { transform:translateY(-5px); }
 
     .btn, .select, .input, .range, .color { font-family: inherit; border-radius: 12px; border: 1px solid var(--border); min-height: 42px; padding:0 14px;}
-    .btn { background: var(--accent); color: #fff; padding: 10px 16px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition:0.15s; border-color:transparent;}
+    .btn { background: var(--accent); color: #fff; padding: 10px 16px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition:0.15s; border-color:transparent; touch-action: manipulation;}
     .btn:hover { filter:brightness(1.1); transform:translateY(-1px);}
     .btn.secondary { background: rgba(255,255,255,.6); color: var(--fg); border-color:var(--border);}
     .btn.icon-only { width:42px; padding:0; justify-content:center;}
@@ -115,10 +115,10 @@
     
     /* Header Toolbar */
     .toolbar { position: sticky; top: 0; z-index: 50; border-radius: 0 0 24px 24px; padding: 0 24px; display: flex; height:64px; align-items: center; justify-content:space-between; margin-bottom: 24px; backdrop-filter: blur(20px); background:rgba(255,255,255,0.7); border-bottom:1px solid var(--border); box-shadow:0 4px 12px rgba(0,0,0,0.03);}
-    .toolbar-left { display:flex; align-items:center; gap:16px; flex:1;}
-    .toolbar-center { display:flex; align-items:center; gap:16px; justify-content:center; flex:1; font-family:'Playfair Display', serif; font-size:1.1rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    .toolbar-left { display:flex; align-items:center; gap:16px; flex:1; min-width:0;}
+    .toolbar-center { display:flex; align-items:center; gap:16px; justify-content:center; flex:1; font-family:'Playfair Display', serif; font-size:1.1rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;}
     .page-info { font-family:'DM Sans', sans-serif; font-size:0.85rem; font-weight:600; color:var(--muted); font-variant-numeric:tabular-nums;}
-    .toolbar-right { display:flex; align-items:center; justify-content:flex-end; gap:8px; flex:1;}
+    .toolbar-right { display:flex; align-items:center; justify-content:flex-end; gap:8px; flex:1; min-width:0;}
     .toolbar-right button { transition:transform 0.15s; }
     .toolbar-right button:hover { transform:scale(1.12); }
 
@@ -189,7 +189,7 @@
     .searchcount { color: var(--muted); font-weight: 600; margin-left: auto; font-size:0.9rem; background:rgba(0,0,0,0.05); padding:4px 10px; border-radius:99px;}
 
     /* Popups */
-    .popup { position: absolute; z-index: 96; border-radius: 99px; display: none; padding:8px 16px; flex-direction:row; align-items:center; gap:12px; box-shadow:var(--shadow);}
+    .popup { position: absolute; z-index: 96; border-radius: 99px; display: none; padding:8px 16px; flex-direction:row; align-items:center; gap:12px; box-shadow:var(--shadow); max-width:calc(100vw - 24px);}
     .popup::after { content:''; position:absolute; bottom:-6px; left:50%; transform:translateX(-50%); border-style:solid; border-width:6px 6px 0; border-color:var(--panel) transparent transparent;}
     .popup.on { display: flex; }
     
@@ -201,7 +201,7 @@
     .row2 { display: flex; gap: 8px; flex-wrap: wrap; }
     .row2 input { flex: 1; min-width: 130px; border: 1px solid var(--border); border-radius: 12px; padding: 10px; background: rgba(255,255,255,.65); color: var(--fg); outline:none;}
     
-    .dict { position: absolute; z-index: 96; border-radius: 16px; display: none; padding: 20px; width: min(360px, calc(100vw - 20px)); border-left:3px solid var(--accent); background:#fff;}
+    .dict { position: absolute; z-index: 96; border-radius: 16px; display: none; padding: 20px; width: min(360px, calc(100vw - 20px)); max-height:min(70vh, 420px); overflow:auto; border-left:3px solid var(--accent); background:#fff;}
     .dict.on { display:flex; flex-direction:column; gap:12px; }
     #dictWord { font-family:'Playfair Display', serif; font-size:1.6rem; font-style:italic;}
     #dictPhonetic { color:var(--muted); font-size:0.9rem; font-family:'DM Sans';}
@@ -232,11 +232,21 @@
 
     @media (max-width: 1100px) { .hero { grid-template-columns: 1fr; } .helpgrid, .statgrid { grid-template-columns: 1fr; } }
     @media (max-width: 768px) { 
-        .toolbar { padding: 10px; } .title { max-width: 180px; } .pageinner { padding: 32px 24px 46px; } .view { padding-inline: 10px; } 
+        .toolbar { padding: 10px; height:auto; min-height:64px; gap:8px; flex-wrap:wrap; }
+        .toolbar-left { flex:0 0 auto; }
+        .toolbar-center { order:-1; flex:1 1 100%; justify-content:flex-start; font-size:1rem; }
+        .toolbar-right { flex:1 1 100%; justify-content:flex-start; overflow-x:auto; padding-bottom:2px; }
+        .toolbar-right::-webkit-scrollbar { display:none; }
+        .toolbar-right .btn, .toolbar-right .exportwrap, .page-info { flex:0 0 auto; }
+        .title { max-width: 180px; } .pageinner { padding: 32px 24px 46px; } .view { padding-inline: 10px; } 
         .readercontent.columns2 .pageinner { column-count: 1; }
         .drawer { right: 0; left: 0; bottom: 0; top: auto; width: 100vw; max-height:85vh; border-radius:24px 24px 0 0; transform:translateY(100%); } 
         .drawer.on { transform:translateY(0);}
-        .searchbar { top: 12px; } 
+        .searchbar { top: 12px; border-radius:24px; padding:12px 16px; } 
+        .popup { border-radius:24px; gap:8px; padding:10px 12px; }
+        .popup-divider { display:none; }
+        .colors, .row2 { width:100%; justify-content:center; }
+        #noteRow { width:min(320px, calc(100vw - 24px)); }
         .tts-player { width:calc(100vw - 32px); bottom:16px; border-radius:24px;}
         :root { --font-size: 16px; }
     }
@@ -270,6 +280,7 @@
     <div class="popup-divider"></div>
     <div class="row2">
       <button class="btn secondary icon-only" id="addNote" style="border-radius:50%;width:32px;height:32px"><i class="fa-regular fa-note-sticky"></i></button>
+      <button class="btn secondary icon-only" id="lookupSel" style="border-radius:50%;width:32px;height:32px" title="Dictionary"><i class="fa-solid fa-book"></i></button>
       <button class="btn secondary icon-only" id="copySel" style="border-radius:50%;width:32px;height:32px"><i class="fa-regular fa-copy"></i></button>
     </div>
   </div>
@@ -449,7 +460,7 @@
       fileInput:$('#fileInput'), openFileBtn:$('#openFileBtn'), demoBtn:$('#demoBtn'), clearLib:$('#clearLib'),
       drop:$('#drop'), loading:$('#loading'), loadingText:$('#loadingText'), backdrop:$('#backdrop'), modback:$('#modback'),
       searchbar:$('#searchbar'), searchInput:$('#searchInput'), prevMatch:$('#prevMatch'), nextMatch:$('#nextMatch'), closeSearch:$('#closeSearch'), searchCount:$('#searchCount'),
-      popup:$('#popup'), noteRow:$('#noteRow'), noteText:$('#noteText'), addNote:$('#addNote'), saveNote:$('#saveNote'), copySel:$('#copySel'),
+      popup:$('#popup'), noteRow:$('#noteRow'), noteText:$('#noteText'), addNote:$('#addNote'), lookupSel:$('#lookupSel'), saveNote:$('#saveNote'), copySel:$('#copySel'),
       dict:$('#dict'), dictWord:$('#dictWord'), dictPhonetic:$('#dictPhonetic'), dictBody:$('#dictBody'), closeDictBtn:$('#closeDictBtn'), dictSpeak:$('#dictSpeak'),
       toastwrap:$('#toastwrap'), focusExit:$('#focusExit'), landing:$('#landingView'), readerContent:$('#readerContent'), readerEmpty:$('#readerEmpty'),
       bookTitle:$('#bookTitle'), pageInfo:$('#pageInfo'), progressBar:$('#progressBar'), toolbar:$('#toolbar'),
@@ -809,7 +820,39 @@
       const cards = [['Session time', formatDur(Date.now() - state.sessionStart)], ['Reading speed', wpm ? `${wpm} WPM` : '0 WPM'], ['Estimated time left', remain ? `${remain} min` : 'Done'], ['Pages read today', String(state.stats.pagesReadToday || 0)], ['Reading streak', `${state.stats.streak || 0} days`], ['Current page', `${getCurrentPage() + 1} / ${pageEls().length || 0}`]];
       el.statsGrid.innerHTML = cards.map(([l, v]) => `<div class="stat"><div class="label">${escapeHtml(l)}</div><div class="value">${escapeHtml(v)}</div></div>`).join('');
     }
-    function bindPageEvents(){ el.readerContent.querySelectorAll('.pageinner').forEach(inner => { inner.removeEventListener('mouseup', scheduleSelectionPopup); inner.removeEventListener('dblclick', onDoubleClickWord); inner.addEventListener('mouseup', scheduleSelectionPopup); inner.addEventListener('dblclick', onDoubleClickWord); }); }
+    function isEditableElement(node = document.activeElement){ return ['INPUT', 'TEXTAREA', 'SELECT'].includes(node?.tagName) || !!node?.isContentEditable; }
+    function getCurrentSelection(){ const sel = window.getSelection(); return sel && typeof sel.rangeCount === 'number' && sel.rangeCount ? sel : null; }
+    function getSelectionPage(sel){
+      if(!sel?.rangeCount) return null;
+      const range = sel.getRangeAt(0);
+      return range.commonAncestorContainer.nodeType === 1 ? range.commonAncestorContainer.closest('.page') : range.commonAncestorContainer.parentElement?.closest('.page');
+    }
+    function normalizeLookupWord(text){
+      const word = String(text || '').trim().replace(/^[^\w'-]+|[^\w'-]+$/g,'');
+      return word && !/\s/.test(word) ? word : '';
+    }
+    function getPendingOrLiveSelection(){
+      const sel = getCurrentSelection();
+      if(sel && !sel.isCollapsed) return sel;
+      if(state.pendingSelection?.range){
+        const range = state.pendingSelection.range.cloneRange();
+        return { isCollapsed:false, rangeCount:1, getRangeAt(){ return range; }, toString(){ return state.pendingSelection?.text || range.toString(); } };
+      }
+      return null;
+    }
+    function openSelectionDictionary(){
+      const sel = getPendingOrLiveSelection();
+      const word = normalizeLookupWord(state.pendingSelection?.text || sel?.toString());
+      if(!sel || !word) return toast('Select a single word to open the dictionary');
+      lookupDict(word, sel);
+    }
+    function onSelectionChange(){
+      if(isEditableElement()) return;
+      const sel = getCurrentSelection();
+      if(!sel || sel.isCollapsed) return;
+      if(getSelectionPage(sel)) scheduleSelectionPopup();
+    }
+    function bindPageEvents(){ el.readerContent.querySelectorAll('.pageinner').forEach(inner => { inner.removeEventListener('mouseup', scheduleSelectionPopup); inner.removeEventListener('touchend', scheduleSelectionPopup); inner.removeEventListener('dblclick', onDoubleClickWord); inner.addEventListener('mouseup', scheduleSelectionPopup); inner.addEventListener('touchend', scheduleSelectionPopup); inner.addEventListener('dblclick', onDoubleClickWord); }); }
     function positionFloatingPanel(node, left, top){
       const width = node.offsetWidth || node.getBoundingClientRect().width || 260;
       const height = node.offsetHeight || node.getBoundingClientRect().height || 0;
@@ -826,11 +869,12 @@
       const seq = ++state.selectionSeq;
       state.selectionTimer = setTimeout(() => {
         if(seq !== state.selectionSeq) return;
-        const sel = window.getSelection();
+        if(isEditableElement()) return hidePopup();
+        const sel = getCurrentSelection();
         if(!sel || sel.isCollapsed) return hidePopup();
         const text = sel.toString().trim(); if(!text) return hidePopup();
         const range = sel.getRangeAt(0);
-        const page = range.commonAncestorContainer.nodeType === 1 ? range.commonAncestorContainer.closest('.page') : range.commonAncestorContainer.parentElement?.closest('.page');
+        const page = getSelectionPage(sel);
         if(!page) return hidePopup();
         const rect = range.getBoundingClientRect(); if(!rect.width && !rect.height) return hidePopup();
         state.pendingSelection = { text, range, page };
@@ -960,7 +1004,7 @@
     }
     function startSearch(){ if(!state.activeBook) return; el.searchbar.classList.add('on'); el.backdrop.classList.add('on'); el.searchInput.focus(); el.searchInput.select(); }
     function closeSearch(){ clearSearch(); el.searchInput.value = ''; el.searchbar.classList.remove('on'); if(![el.bookmarksDrawer, el.highlightsDrawer, el.statsDrawer, el.helpModal].some(d => d.classList.contains('on'))) el.backdrop.classList.remove('on'); }
-    function onDoubleClickWord(){ setTimeout(() => { const sel = window.getSelection(); if(!sel || sel.isCollapsed) return; const word = sel.toString().trim().replace(/^[^\w'-]+|[^\w'-]+$/g,''); if(!word || /\s/.test(word)) return; lookupDict(word, sel); }, 0); }
+    function onDoubleClickWord(){ setTimeout(() => { const sel = getCurrentSelection(); if(!sel || sel.isCollapsed) return; const word = normalizeLookupWord(sel.toString()); if(!word) return; lookupDict(word, sel); }, 0); }
     async function lookupDict(word, sel){
       try{
         if(state.dictAbort) state.dictAbort.abort(); state.dictAbort = new AbortController();
@@ -1123,6 +1167,7 @@ End of sample.`;
       }));
       el.columnsToggle.addEventListener('change', () => { state.settings.columns = el.columnsToggle.checked; el.readerContent.classList.toggle('columns2', !!state.settings.columns); saveJSON(STORAGE.settings, state.settings); });
       el.jumpPage.addEventListener('keydown', e => { if(e.key === 'Enter') scrollToPage(Number(el.jumpPage.value)); });
+      el.jumpPage.addEventListener('change', () => { if(el.jumpPage.value) scrollToPage(Number(el.jumpPage.value)); });
       el.searchBtn.addEventListener('click', startSearch);
       el.searchInput.addEventListener('input', () => search(el.searchInput.value));
       el.searchInput.addEventListener('keydown', e => { if(e.key === 'Enter') goSearch(state.search.index + 1); if(e.key === 'Escape') closeSearch(); });
@@ -1130,6 +1175,7 @@ End of sample.`;
       el.nextMatch.addEventListener('click', () => goSearch(state.search.index + 1));
       el.closeSearch.addEventListener('click', closeSearch);
       el.addNote.addEventListener('click', renderNoteInput);
+      el.lookupSel.addEventListener('click', openSelectionDictionary);
       el.saveNote.addEventListener('click', saveNote);
       el.copySel.addEventListener('click', async () => { const text = state.pendingSelection?.text || window.getSelection()?.toString().trim(); if(text) { try{ await navigator.clipboard?.writeText?.(text); }catch{} toast('Copied selection'); } });
       el.closeDictBtn.addEventListener('click', closeDict);
@@ -1187,6 +1233,7 @@ End of sample.`;
       });
       el.backdrop.addEventListener('click', closeAllOverlays);
       el.modback.addEventListener('click', closeAllOverlays);
+      document.addEventListener('selectionchange', onSelectionChange);
       window.addEventListener('scroll', onScroll, { passive:true });
       window.addEventListener('beforeunload', () => { saveCurrentPosition(); });
       window.addEventListener('mousemove', () => { if(document.body.classList.contains('focus')) { el.focusExit.style.opacity = '1'; clearTimeout(el.focusExit._t); el.focusExit._t = setTimeout(() => { if(document.body.classList.contains('focus')) el.focusExit.style.opacity = '0'; }, 1400); } });
@@ -1211,6 +1258,7 @@ End of sample.`;
     function boot(){
       populateFonts();
       el.fontSelect.value = state.settings.font;
+      if(el.streakFlame?.parentElement?.firstChild) el.streakFlame.parentElement.firstChild.textContent = 'Streak: ';
       setStreak();
       bindEvents();
       if(!state.autoSaveTimer) state.autoSaveTimer = setInterval(() => saveCurrentPosition(), 5000);
