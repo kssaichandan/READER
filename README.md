@@ -1,86 +1,51 @@
 # Local Book Reader
 
-Local Book Reader is a browser-based reading app packed into a single HTML file.
+Local Book Reader is a browser-based reading app for opening and reading books directly in the browser.
 
-It is designed for private, local reading with a polished interface, customizable typography, built-in notes and highlights, search, reading stats, and text-to-speech controls.
+It is built as a lightweight local-first reader with support for uploading files, customizing the reading experience, saving progress, and using tools like bookmarks, highlights, notes, search, and text-to-speech.
 
-## Run
+## Live Link
 
-Use this single terminal command:
+https://reader-dljp.onrender.com/textbook%20reader.html
 
-```powershell
-Start-Process ".\index.html"
-```
+## What This Is
 
-## What It Does
+This project is a clean ebook and document reader made for simple browser use.
 
-The app opens supported book files directly in the browser and lets you:
+You can upload supported files, read them in a polished interface, change the reading style, and keep your reading data saved in the browser.
 
-- read without a backend
-- keep a local library in browser storage
-- resume where you left off
-- customize the reading surface
-- search through the current book
-- save bookmarks, highlights, and notes
-- export saved highlights
-- use text-to-speech controls
+It is useful for:
+
+- reading books locally in the browser
+- keeping bookmarks and notes
+- searching inside uploaded content
+- resuming from your last reading position
+- using text-to-speech for read-aloud support
+
+## How It Works
+
+The app runs on the client side in the browser.
+
+1. Open the reader.
+2. Upload a supported file such as TXT, HTML, PDF, or EPUB.
+3. The app parses the file in the browser and renders it into readable pages or sections.
+4. Your reading state is saved in browser storage so bookmarks, highlights, notes, and progress can be restored later.
 
 ## Main Features
 
-### Library
-
-- Upload books from your device
-- Keep a local shelf of opened books
-- Reopen recent books from the library view
-- Remove books you no longer want saved
-
-### Reading Experience
-
-- Clean reading layout
-- Scroll-based reading flow
-- Progress bar and current page display
-- Adjustable reading width
-- Optional two-column reading mode
-- Focus mode for distraction-free reading
-
-### Themes and Typography
-
-- Preset reading themes
-- Custom page background color
-- Custom page text color
-- Custom accent color
-- Font family selector
-- Font size control
-- Line height control
-- Letter spacing control
-- Word spacing control
-- Paragraph spacing control
-
-Theme changes are applied to the reading surface so the surrounding UI stays stable.
-
-### Search, Notes, and Highlights
-
-- In-book text search
-- Next and previous match navigation
-- Text selection popup for quick actions
-- Highlight selected text in multiple colors
-- Attach notes to saved highlights
-- Jump back to saved highlights
-
-### Bookmarks and Progress
-
-- Save the current reading position as a bookmark
-- Return to saved bookmarks
-- Automatically store resume position
-- Track reading progress and daily reading activity
-
-### TTS and Dictionary
-
-- Built-in text-to-speech player
-- Voice selection
-- Rate control
-- Sentence highlighting while speech is active
-- Double-click word lookup with dictionary popup
+- local library view for opened books
+- resume reading from the last saved position
+- search with next and previous navigation
+- bookmarks for quick return points
+- highlights in multiple colors
+- notes attached to highlights
+- text-to-speech controls
+- dictionary popup for selected words
+- focus mode
+- adjustable reading width
+- font and spacing controls
+- theme and custom color controls
+- reading progress and reading stats
 
 ## Supported File Types
 
@@ -90,88 +55,26 @@ Theme changes are applied to the reading surface so the surrounding UI stays sta
 - `PDF`
 - `EPUB`
 
-## Keyboard Shortcuts
+## Local Run Command
 
-- `Ctrl + F` opens search
-- `Ctrl + B` adds a bookmark
-- `Ctrl + D` toggles dark/light behavior
-- `Ctrl + +` increases font size
-- `Ctrl + -` decreases font size
-- `F11` or `Ctrl + Shift + F` toggles fullscreen
-- `Page Up` and `Page Down` move between reading sections
-- `Escape` closes overlays or exits focus mode
-- `?` opens the shortcuts help panel
+```powershell
+Start-Process ".\index.html"
+```
 
 ## Storage
 
-The app stores reading data locally in the browser using:
+The app uses browser storage to keep useful reading data such as:
 
-- `localStorage`
-- `sessionStorage`
-
-This can include:
-
-- library entries
-- last opened position
-- reading progress
+- library items
+- resume position
 - bookmarks
 - highlights
 - notes
+- reading progress
 - reading stats
 
-## Tech Notes
+## Notes
 
-- The entire app lives in `textbook reader.html`
-- The interface, styles, and logic are all embedded in that file
-- PDF and EPUB support depend on browser-side libraries loaded from CDNs
-- Speech features depend on browser support for the Web Speech API
-- `index.html` is included as a simple entry point for static hosting platforms such as Render
-
-## Deploy on Render
-
-This repo is now prepared for both common Render setups:
-
-- Static Site
-- Docker-based Web Service
-
-### Recommended: Static Site
-
-If you create a **Static Site** on Render, use:
-
-- Branch: `main`
-- Publish directory: `.`
-
-`index.html` is included so the app opens correctly from the root URL.
-
-### If Render tries to build a Docker service
-
-If Render is creating a **Web Service** and looks for a `Dockerfile`, this repo now includes one.
-
-That means the same repo can also deploy successfully as a Docker-based service without extra setup.
-
-Included deployment files:
-
-- `index.html` - root entry point for static hosting
-- `render.yaml` - optional Render Blueprint config
-- `Dockerfile` - supports Docker/Web Service deployment on Render
-
-## Good Fit For
-
-- personal reading
-- local-first workflows
-- offline-friendly reading after assets are loaded
-- quick ebook viewing without a separate app install
-
-## Limitations
-
-- PDF and EPUB parsing depend on external browser libraries loading successfully
-- Speech synthesis support varies by browser and operating system
-- Very large books may hit browser storage limits
-- Dictionary lookup depends on network access to the dictionary API
-
-## File In This Repo
-
-- `textbook reader.html` - the complete application
-- `index.html` - hosting-friendly entry point
-- `render.yaml` - optional Render config
-- `Dockerfile` - Docker deployment support
+- PDF and EPUB support depend on browser-side libraries loading correctly
+- text-to-speech depends on browser support for the Web Speech API
+- very large books may hit browser storage limits
