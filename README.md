@@ -9,7 +9,7 @@ It is designed for private, local reading with a polished interface, customizabl
 Use this single terminal command:
 
 ```powershell
-Start-Process ".\textbook reader.html"
+Start-Process ".\index.html"
 ```
 
 ## What It Does
@@ -125,6 +125,38 @@ This can include:
 - The interface, styles, and logic are all embedded in that file
 - PDF and EPUB support depend on browser-side libraries loaded from CDNs
 - Speech features depend on browser support for the Web Speech API
+- `index.html` is included as a simple entry point for static hosting platforms such as Render
+
+## Deploy on Render
+
+This project can be deployed on Render as a **Static Site**.
+
+Two easy options are available:
+
+- use the included `render.yaml` as a Blueprint
+- create a Static Site manually in the Render dashboard
+
+Use these settings in the Render dashboard:
+
+- Service type: `Static Site`
+- Branch: `main`
+- Build command: leave empty if Render allows it
+- Publish directory: `.`
+
+Why `index.html` was added:
+
+- Render static sites are served from a publish directory, and having an `index.html` at the root makes the app open directly from the site root
+- `index.html` redirects to `textbook reader.html`, so the main app file does not need to be renamed
+
+Included Render file:
+
+- `render.yaml` - optional Blueprint config for Render deployment
+
+If Render asks for a build command and does not allow it to be empty, use:
+
+```text
+echo ready
+```
 
 ## Good Fit For
 
