@@ -6,7 +6,7 @@ It is built as a lightweight local-first reader with support for uploading files
 
 ## Live Link
 
-https://reader-dljp.onrender.com/textbook%20reader.html
+https://reader-dljp.onrender.com
 
 ## What This Is
 
