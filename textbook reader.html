@@ -4,14 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Local Book Reader</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; connect-src 'self' https://api.dictionaryapi.dev https://cdnjs.cloudflare.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-src 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Nunito:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/1.10.88/pdf.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" integrity="sha384-QI8z31KmtR+tk1MYi0DfgxrjYgpTpLLol3bqZA/Q1Y8BvH+6k7/Huoj38gQOaCS7" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" integrity="sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js" integrity="sha384-ZqmkDa/1AGF4SKdSmXgEG+3G+Gsb6yNqUSq2Mqp0jDf1GWk+UY5eNbEd7hgwiywI" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <style>
 
 
@@ -490,7 +492,7 @@
     function formatDur(ms){ const s=Math.floor(ms/1000), h=Math.floor(s/3600), m=Math.floor((s%3600)/60), r=s%60; return h ? `${h}h ${m}m ${r}s` : m ? `${m}m ${r}s` : `${r}s`; }
     function clamp(n,min,max){ return Math.min(max, Math.max(min, n)); }
     function hasSpeechSupport(){ return typeof window !== 'undefined' && 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window; }
-    function hasPdfSupport(){ return typeof window !== 'undefined' && typeof window.PDFJS !== 'undefined'; }
+    function hasPdfSupport(){ return typeof window !== 'undefined' && typeof window.pdfjsLib !== 'undefined'; }
     function hasEpubSupport(){ return typeof window !== 'undefined' && typeof window.ePub === 'function'; }
     function toast(msg){ const d=document.createElement('div'); d.className='toast'; d.textContent=msg; el.toastwrap.appendChild(d); d.addEventListener('animationend', ()=>d.remove(), {once:true}); }
     function showLoading(text='Parsing book...'){ el.loadingText.textContent = text; el.loading.classList.add('on'); }
@@ -607,9 +609,26 @@
       push();
       return pages.length ? pages : [{ html:'<p>(empty document)</p>', text:'', words:0 }];
     }
+    function sanitizeHtmlRoot(root){
+      if(!root) return root;
+      // Drop elements that can execute code, load remote resources, or hijack the page.
+      root.querySelectorAll('script,iframe,frame,frameset,object,embed,link,meta,base,style').forEach(n => n.remove());
+      // Scrub dangerous attributes from everything that remains.
+      root.querySelectorAll('*').forEach(node => {
+        [...node.attributes].forEach(attr => {
+          const name = attr.name.toLowerCase();
+          const value = (attr.value || '').replace(/[\u0000-\u0020]+/g, '').toLowerCase();
+          const isUrlAttr = /^(href|xlink:href|src|action|formaction|data|background|poster|srcdoc)$/.test(name);
+          if(name.startsWith('on')) node.removeAttribute(attr.name);              // inline event handlers
+          else if(name === 'srcdoc') node.removeAttribute(attr.name);             // iframe srcdoc payloads
+          else if(isUrlAttr && /^(javascript|vbscript|data):/.test(value) && !/^data:image\//.test(value)) node.removeAttribute(attr.name);
+        });
+      });
+      return root;
+    }
     function stripHtml(raw){
       const doc = new DOMParser().parseFromString(raw, 'text/html');
-      [...doc.querySelectorAll('script,iframe,object,embed')].forEach(n => n.remove());
+      sanitizeHtmlRoot(doc.body);
       return { html: doc.body.innerHTML || '<p>(empty document)</p>', text: (doc.body.textContent || '').trim() };
     }
     function groupPdf(items){
@@ -639,9 +658,9 @@
     }
     async function parsePdf(buf){
       if(!hasPdfSupport()) throw new Error('PDF support is unavailable right now. Reload the page and try again.');
-      PDFJS.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/1.10.88/pdf.worker.min.js';
-      const loadingTask = PDFJS.getDocument(buf);
-      const pdf = await new Promise((res, rej) => { loadingTask.then(res, rej); });
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      const loadingTask = pdfjsLib.getDocument({ data: buf, isEvalSupported: false });
+      const pdf = await loadingTask.promise;
       const pages = [];
       for(let i=1;i<=pdf.numPages;i++){ const p = await pdf.getPage(i); const content = await p.getTextContent(); const lines = groupPdf(content.items); const text = lines.map(l=>l.text).join('\n'); pages.push({ html: lines.map(l => `<p>${escapeHtml(l.text)}</p>`).join('') || '<p>(blank page)</p>', text, words:text.split(/\s+/).filter(Boolean).length, pageNumber:i }); }
       return pages;
@@ -1012,7 +1031,7 @@
         el.dictWord.textContent = word; el.dictPhonetic.textContent = 'Loading...'; el.dictBody.textContent = '';
         el.dict.classList.add('on'); el.backdrop.classList.add('on');
         positionFloatingPanel(el.dict, rect.left + scrollX + (rect.width / 2) - (el.dict.offsetWidth / 2), rect.bottom + scrollY + 12);
-        const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`, { signal: state.dictAbort.signal });
+        const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`, { signal: state.dictAbort.signal, referrerPolicy: 'no-referrer', credentials: 'omit', cache: 'force-cache' });
         const data = await res.json(), entry = Array.isArray(data) ? data[0] : data, meaning = entry?.meanings?.[0], def = meaning?.definitions?.[0] || {};
         el.dictPhonetic.textContent = entry?.phonetic || entry?.phonetics?.find(p => p.text)?.text || '';
         el.dictBody.innerHTML = `<div style="font-weight:800;color:var(--accent);margin-bottom:6px">${escapeHtml(meaning?.partOfSpeech || 'word')}</div><div>${escapeHtml(def.definition || 'No definition found.')}</div>${def.example ? `<div style="margin-top:10px;color:var(--muted)"><strong>Example:</strong> ${escapeHtml(def.example)}</div>` : ''}`;
