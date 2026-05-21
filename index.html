@@ -1206,21 +1206,34 @@
         const lines = groupPdf(content.items);
         const text = lines.map(l=>l.text).join('\n');
         let html = lines.map(l => `<p>${escapeHtml(l.text)}</p>`).join('');
-        // Render the page once: this resolves the page's image XObjects into
-        // page.objs (so extraction can read them) and gives us a scanned-page
-        // fallback canvas. Wrapped so a render failure never aborts the PDF.
-        let renderCanvas = null;
+        // Cheaply check whether this page actually paints any raster images,
+        // so pure-text pages skip the expensive canvas render entirely.
+        let hasImageOps = false;
         try{
-          const vp = p.getViewport({ scale: 2 });
-          const canvas = document.createElement('canvas');
-          canvas.width = Math.max(1, Math.round(vp.width));
-          canvas.height = Math.max(1, Math.round(vp.height));
-          await p.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
-          renderCanvas = canvas;
-        }catch(e){ renderCanvas = null; }
-        // Extract images for this page; never let image work abort PDF parsing.
+          const opl = await p.getOperatorList();
+          const IMG_OPS = [pdfjsLib.OPS.paintImageXObject, pdfjsLib.OPS.paintInlineImageXObject];
+          hasImageOps = (opl.fnArray || []).some(fn => IMG_OPS.indexOf(fn) !== -1);
+        }catch(e){}
+        // Render the page only when it has images, or has no text (scanned page).
+        // Rendering resolves the page's image XObjects into page.objs (so they
+        // can be extracted) and gives a scanned-page fallback canvas. Wrapped so
+        // a render failure never aborts the PDF.
+        let renderCanvas = null;
+        if(hasImageOps || !text){
+          try{
+            const vp = p.getViewport({ scale: 2 });
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(vp.width));
+            canvas.height = Math.max(1, Math.round(vp.height));
+            await p.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+            renderCanvas = canvas;
+          }catch(e){ renderCanvas = null; }
+        }
+        // Extract images only when the page paints some; never abort PDF parsing.
         let images = [];
-        try{ images = await extractPdfPageImages(p); }catch(e){ images = []; }
+        if(hasImageOps){
+          try{ images = await extractPdfPageImages(p); }catch(e){ images = []; }
+        }
         if(images.length){
           html += images.map(url => `<figure class="pdf-figure"><img src="${url}" alt="Figure from page ${i}" loading="lazy"></figure>`).join('');
         }
