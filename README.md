@@ -78,3 +78,6 @@ The app uses browser storage to keep useful reading data such as:
 - PDF and EPUB support depend on browser-side libraries loading correctly
 - text-to-speech depends on browser support for the Web Speech API
 - very large books may hit browser storage limits
+
+  ## Contact info: kssaichandan@gmail.com
+  
