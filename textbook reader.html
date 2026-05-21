@@ -12,6 +12,9 @@
   <link rel="canonical" href="https://reader-dljp.onrender.com/">
   <meta name="theme-color" content="#C8602A">
 
+  <!-- PWA / offline support -->
+  <link rel="manifest" href="manifest.json">
+
   <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="Local Book Reader — private browser ebook reader">
@@ -2120,7 +2123,16 @@ End of demo.`;
       renderLibrary();
       updateProgress();
       if(!state.library.length) renderLibrary();
+      registerServiceWorker();
       toast('Reader ready');
+    }
+    // Register the service worker for offline support / PWA install.
+    // Runs after load so it never blocks boot; fails silently if unsupported.
+    function registerServiceWorker(){
+      if(!('serviceWorker' in navigator)) return;
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
     }
     boot();
   </script>
