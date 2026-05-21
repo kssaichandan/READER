@@ -588,6 +588,56 @@
     const $ = s => document.querySelector(s);
     const $$ = s => [...document.querySelectorAll(s)];
     const STORAGE = { library:'book_reader_library', settings:'book_reader_settings', stats:'book_reader_stats' };
+    // --- IndexedDB layer for bulky book content -----------------------------
+    // Large parsed books (pages + full text) can easily exceed the ~5MB
+    // localStorage cap. They live in IndexedDB instead, which has no practical
+    // size limit. Small metadata (library list, settings, stats, bookmarks,
+    // highlights, resume, daily pages) stays in localStorage as before.
+    const IDB = { name:'book_reader_db', store:'books', version:1 };
+    let idbPromise = null;
+    function idbOpen(){
+      if(idbPromise) return idbPromise;
+      idbPromise = new Promise((resolve, reject) => {
+        try{
+          if(typeof indexedDB === 'undefined' || !indexedDB){ reject(new Error('IndexedDB unavailable')); return; }
+          const req = indexedDB.open(IDB.name, IDB.version);
+          req.onupgradeneeded = () => {
+            const db = req.result;
+            if(!db.objectStoreNames.contains(IDB.store)) db.createObjectStore(IDB.store);
+          };
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error || new Error('IndexedDB open failed'));
+          req.onblocked = () => reject(new Error('IndexedDB blocked'));
+        }catch(err){ reject(err); }
+      }).catch(err => { idbPromise = null; throw err; });
+      return idbPromise;
+    }
+    function idbTx(mode, fn){
+      return idbOpen().then(db => new Promise((resolve, reject) => {
+        try{
+          const tx = db.transaction(IDB.store, mode);
+          const store = tx.objectStore(IDB.store);
+          const result = fn(store);
+          tx.oncomplete = () => resolve(result && result.__req ? result.__req.result : result);
+          tx.onerror = () => reject(tx.error || new Error('IndexedDB transaction failed'));
+          tx.onabort = () => reject(tx.error || new Error('IndexedDB transaction aborted'));
+        }catch(err){ reject(err); }
+      }));
+    }
+    function idbPutBook(key, payload){
+      return idbTx('readwrite', store => ({ __req: store.put(payload, String(key)) }));
+    }
+    function idbGetBook(key){
+      return idbTx('readonly', store => ({ __req: store.get(String(key)) }))
+        .then(v => v == null ? null : v);
+    }
+    function idbDeleteBook(key){
+      return idbTx('readwrite', store => ({ __req: store.delete(String(key)) }));
+    }
+    function idbAllKeys(){
+      return idbTx('readonly', store => ({ __req: store.getAllKeys() }))
+        .then(keys => Array.isArray(keys) ? keys.map(String) : []);
+    }
     const THEMES = {
       paper:{bg:'#FAFAF8',fg:'#1a1a1a',pageBg:'#FEFCF8',accent:'#4f7cff',panel:'rgba(255,255,255,.84)',texture:.07},
       sepia:{bg:'#F4ECD8',fg:'#5b4636',pageBg:'#F9F2E3',accent:'#a96b2d',panel:'rgba(255,248,236,.88)',texture:.08},
@@ -940,12 +990,17 @@
       else if(!wantDark && isDark){ applyTheme('paper'); state.settings.autoTheme = true; saveJSON(STORAGE.settings, state.settings); }
     }
     function bookIsOpenable(book){
+      // Book content now lives in async IndexedDB, so it cannot be probed
+      // synchronously during render. Use the library record's persisted flag
+      // (kept in sync by persistBook/updateLibrary) or the in-session cache.
       const bk = bookKey(book);
-      return localStorage.getItem(bk) != null || sessionStorage.getItem(bk) != null || state.memoryBooks.has(bk);
+      return !!(book && book.hasPersistedContent) || state.memoryBooks.has(bk)
+        || localStorage.getItem(bk) != null || sessionStorage.getItem(bk) != null;
     }
     function bookIsFullySaved(book){
-      // Fully saved means the content survives a browser restart (localStorage).
-      return localStorage.getItem(bookKey(book)) != null;
+      // Fully saved means the content survives a browser restart (IndexedDB or
+      // legacy localStorage). hasPersistedContent is set true only for those.
+      return !!(book && book.hasPersistedContent) || localStorage.getItem(bookKey(book)) != null;
     }
     function getVisibleLibrary(){
       const q = (state.libraryFilter.query || '').trim().toLowerCase();
@@ -1101,24 +1156,31 @@
       else if(ext === 'epub'){ pages = await parseEpub(await file.arrayBuffer()); fullText = pages.map(p=>p.text).join('\n\n'); }
       else throw new Error('Unsupported file type');
       const book = { ...meta, pages, fullText, totalWords: fullText.split(/\s+/).filter(Boolean).length, totalPages: pages.length };
-      persistBook(book);
+      await persistBook(book);
       return book;
     }
     function cloneBook(book){
       try{ return JSON.parse(JSON.stringify(book)); }catch{ return book; }
     }
-    function persistBook(book){
+    async function persistBook(book){
       const key = bookKey(book);
       const payload = { ...book, hasPersistedContent:true };
-      const data = JSON.stringify(payload);
-      let savedToLocal = false, savedToSession = false;
-      try{ localStorage.setItem(key, data); savedToLocal = true; }
-      catch{ try{ sessionStorage.setItem(key, data); savedToSession = true; }catch{} }
+      // Fast in-session cache: always available even if every store fails.
       state.memoryBooks.set(key, cloneBook(payload));
-      // Only localStorage survives a tab close; sessionStorage/memory do not.
-      book.hasPersistedContent = savedToLocal;
+      let savedToIdb = false, savedToLocal = false, savedToSession = false;
+      try{ await idbPutBook(key, cloneBook(payload)); savedToIdb = true; }
+      catch{
+        // IndexedDB unavailable/failed: fall back to the legacy storage chain
+        // so large-but-not-huge books still persist as before.
+        const data = JSON.stringify(payload);
+        try{ localStorage.setItem(key, data); savedToLocal = true; }
+        catch{ try{ sessionStorage.setItem(key, data); savedToSession = true; }catch{} }
+      }
+      // IndexedDB and localStorage survive a tab close; sessionStorage/memory do not.
+      const persisted = savedToIdb || savedToLocal;
+      book.hasPersistedContent = persisted;
       updateLibrary(book);
-      if(savedToLocal){
+      if(persisted){
         toast(`Saved ${book.title} to the library`);
       }else{
         const where = savedToSession ? 'only for this browser tab' : 'only in memory';
@@ -1126,14 +1188,34 @@
         showPersistBanner(`"${book.title || book.filename || 'This book'}" could not be saved to permanent storage and is kept ${where}. It will be lost when you close the tab. Use Export Library (backup) to keep a copy.`);
       }
     }
-    function loadPersisted(book){
+    async function loadPersisted(book){
       const key = bookKey(book);
-      try{ const raw = localStorage.getItem(key); if(raw) return JSON.parse(raw); }catch{}
-      try{ const raw = sessionStorage.getItem(key); if(raw) return JSON.parse(raw); }catch{}
+      // 1. In-session cache: synchronous hit, return immediately.
       const cached = state.memoryBooks.get(key);
-      return cached ? cloneBook(cached) : null;
+      if(cached) return cloneBook(cached);
+      // 2. IndexedDB: where book content now lives.
+      try{
+        const fromIdb = await idbGetBook(key);
+        if(fromIdb){ state.memoryBooks.set(key, cloneBook(fromIdb)); return cloneBook(fromIdb); }
+      }catch{}
+      // 3. Legacy localStorage/sessionStorage (books saved by older versions).
+      let legacy = null, legacyStore = null;
+      try{ const raw = localStorage.getItem(key); if(raw){ legacy = JSON.parse(raw); legacyStore = localStorage; } }catch{}
+      if(!legacy){
+        try{ const raw = sessionStorage.getItem(key); if(raw){ legacy = JSON.parse(raw); legacyStore = sessionStorage; } }catch{}
+      }
+      if(legacy){
+        state.memoryBooks.set(key, cloneBook(legacy));
+        // Opportunistically migrate to IndexedDB and drop the bulky legacy key.
+        try{
+          await idbPutBook(key, cloneBook(legacy));
+          try{ legacyStore.removeItem(key); }catch{}
+        }catch{}
+        return cloneBook(legacy);
+      }
+      return null;
     }
-    function clearPersistedBookData(book){
+    async function clearPersistedBookData(book){
       const key = bookKey(book);
       if(!key) return;
       [localStorage, sessionStorage].forEach(store => {
@@ -1143,6 +1225,7 @@
         try{ store.removeItem(key + '_highlights'); }catch{}
       });
       state.memoryBooks.delete(key);
+      try{ await idbDeleteBook(key); }catch{}
     }
     function saveCurrentPosition(){
       if(!state.activeBook) return;
@@ -1668,9 +1751,11 @@
       downloadFile(`${safeName}_highlights.txt`, lines.join('\n'), 'text/plain;charset=utf-8');
       toast('Highlights exported');
     }
-    // Gathers every book_reader_* key from both storages into one backup object.
-    function exportLibraryBackup(){
-      const backup = { type:'book_reader_backup', version:1, generated:new Date().toISOString(), local:{}, session:{} };
+    // Gathers every book_reader_* key from both storages plus all IndexedDB
+    // book content into one backup object. Book content lives in IndexedDB, so
+    // it must be included or the backup would silently miss every book.
+    async function exportLibraryBackup(){
+      const backup = { type:'book_reader_backup', version:2, generated:new Date().toISOString(), local:{}, session:{}, idb:{} };
       let count = 0;
       try{
         for(let i=0;i<localStorage.length;i++){
@@ -1684,29 +1769,40 @@
           if(k && k.startsWith('book_reader_') && !(k in backup.local)){ backup.session[k] = sessionStorage.getItem(k); count++; }
         }
       }catch(e){ console.error(e); }
+      try{
+        const keys = await idbAllKeys();
+        for(const k of keys){
+          const payload = await idbGetBook(k);
+          if(payload != null){ backup.idb[k] = payload; count++; }
+        }
+      }catch(e){ console.error(e); }
       if(!count){ toast('Nothing to back up yet'); return; }
       const stamp = new Date().toISOString().slice(0,10);
       downloadFile(`book_reader_backup_${stamp}.json`, JSON.stringify(backup, null, 2), 'application/json;charset=utf-8');
       toast(`Library backup exported (${count} items)`);
     }
     // Restores keys from a backup JSON file produced by exportLibraryBackup.
+    // Handles both v2 backups (with an `idb` section for book content) and
+    // legacy v1 backups (book content was inside `local`).
     function importLibraryBackup(file){
       if(!file) return;
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onload = async () => {
         let data;
         try{ data = JSON.parse(String(reader.result || '')); }
         catch{ toast('Invalid backup file'); return; }
         const localData = data && typeof data.local === 'object' && data.local ? data.local : null;
         const sessionData = data && typeof data.session === 'object' && data.session ? data.session : null;
-        if(data && data.type !== 'book_reader_backup' && !localData && !sessionData){
+        const idbData = data && typeof data.idb === 'object' && data.idb ? data.idb : null;
+        if(data && data.type !== 'book_reader_backup' && !localData && !sessionData && !idbData){
           toast('That file is not a Book Reader backup');
           return;
         }
         const localKeys = localData ? Object.keys(localData) : [];
         const sessionKeys = sessionData ? Object.keys(sessionData) : [];
-        if(!localKeys.length && !sessionKeys.length){ toast('Backup contained no data'); return; }
-        if(!confirm(`Restore ${localKeys.length + sessionKeys.length} item(s) from this backup? Existing entries with the same name will be overwritten.`)) return;
+        const idbKeys = idbData ? Object.keys(idbData) : [];
+        if(!localKeys.length && !sessionKeys.length && !idbKeys.length){ toast('Backup contained no data'); return; }
+        if(!confirm(`Restore ${localKeys.length + sessionKeys.length + idbKeys.length} item(s) from this backup? Existing entries with the same name will be overwritten.`)) return;
         let restored = 0, failed = 0;
         localKeys.forEach(k => {
           if(!k.startsWith('book_reader_')) return;
@@ -1720,6 +1816,16 @@
           if(!k.startsWith('book_reader_') || k in (localData || {})) return;
           try{ sessionStorage.setItem(k, sessionData[k]); restored++; }catch{ failed++; }
         });
+        // Restore book content into IndexedDB.
+        for(const k of idbKeys){
+          try{ await idbPutBook(k, idbData[k]); restored++; }
+          catch{
+            // IndexedDB unavailable: keep the content reachable via the legacy
+            // localStorage fallback that loadPersisted still understands.
+            try{ localStorage.setItem(k, JSON.stringify(idbData[k])); restored++; }
+            catch{ failed++; }
+          }
+        }
         if(failed){
           showPersistBanner(`${failed} backup item(s) could not be restored (browser storage may be full). The page will reload with what was restored.`);
         }
@@ -1807,13 +1913,13 @@
     function stopSpeech(){ stopTTSKeepAlive(); if(hasSpeechSupport()) speechSynthesis.cancel(); state.tts.utterance = null; state.tts.queue = null; state.tts.idx = 0; state.tts.fullText = null; clearTTS(); state.tts.baseHtml = null; setTTSButtonState('stopped'); el.ttsPlayer.classList.remove('on');}
     function toggleFullscreen(){ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.(); }
     function switchDarkLight(){ if(state.settings.theme === 'night' || state.settings.theme === 'amoled' || state.settings.theme === 'ocean') applyTheme('paper'); else applyTheme('night'); }
-    function openLibraryFromId(id){
+    async function openLibraryFromId(id){
       const meta = state.library.find(b => b.id === id || fileKey(b.filename) === id || fileKey(b.title) === id);
       if(!meta) return;
       showLoading(`Opening ${meta.title || meta.filename || 'book'}...`);
       try{
-        // loadPersisted already checks localStorage, sessionStorage, and memoryBooks.
-        const data = loadPersisted(meta);
+        // loadPersisted checks memoryBooks, then IndexedDB, then legacy storage.
+        const data = await loadPersisted(meta);
         if(!data){
           toast('This book is no longer stored locally. Re-upload the file to read it again.');
           return;
@@ -2039,6 +2145,8 @@ End of demo.`;
             else if(sv != null) snapshot.keys[k] = { store:'session', value:sv };
           });
           const memorySnapshot = state.memoryBooks.get(bk);
+          // Snapshot IndexedDB content too, so undo can restore the bulky payload.
+          idbGetBook(bk).then(v => { snapshot.idb = v || null; }).catch(() => { snapshot.idb = null; });
           state.library = state.library.filter(b => b.id !== removeId);
           saveJSON(STORAGE.library, state.library);
           clearPersistedBookData(book || { id:removeId });
@@ -2049,6 +2157,7 @@ End of demo.`;
               try{ (info.store === 'local' ? localStorage : sessionStorage).setItem(k, info.value); }catch{}
             });
             if(memorySnapshot) state.memoryBooks.set(bk, memorySnapshot);
+            if(snapshot.idb) idbPutBook(bk, snapshot.idb).catch(() => {});
             if(snapshot.record && !state.library.some(b => b.id === snapshot.record.id)){
               state.library.unshift(snapshot.record);
               saveJSON(STORAGE.library, state.library);
