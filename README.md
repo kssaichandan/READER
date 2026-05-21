@@ -1,8 +1,12 @@
 # Local Book Reader
 
+> A free, private, browser-based ebook reader — open TXT, PDF, EPUB and HTML files with themes, highlights, notes, search and read-aloud. Your files never leave your browser.
+
 Local Book Reader is a browser-based reading app for opening and reading books directly in the browser.
 
 It is built as a lightweight local-first reader with support for uploading files, customizing the reading experience, saving progress, and using tools like bookmarks, highlights, notes, search, and text-to-speech.
+
+<!-- Screenshot: a screenshot or animated demo of the reader could go here. -->
 
 ## Live Link
 
@@ -55,6 +59,18 @@ The app runs on the client side in the browser.
 - `PDF`
 - `EPUB`
 
+## Tech Stack
+
+- single, self-contained HTML file with inline CSS and vanilla JavaScript — no build step and no framework
+- [pdf.js](https://mozilla.github.io/pdf.js/) for rendering PDF documents
+- [JSZip](https://stuk.github.io/jszip/) for unpacking EPUB archives
+- [epub.js](https://github.com/futurepress/epub.js/) for parsing and rendering EPUB content
+- browser `localStorage` for persistence and the Web Speech API for read-aloud
+
+## Browser Support
+
+Works in modern evergreen browsers (recent Chrome, Edge, Firefox and Safari) with JavaScript enabled. PDF and EPUB rendering depend on the browser-side libraries above; read-aloud depends on the browser's Web Speech API support.
+
 ## Local Run Command
 
 ```powershell
@@ -79,5 +95,10 @@ The app uses browser storage to keep useful reading data such as:
 - text-to-speech depends on browser support for the Web Speech API
 - very large books may hit browser storage limits
 
-  ## Contact info: kssaichandan@gmail.com
-  
+## License
+
+Released under the MIT License.
+
+## Contact
+
+kssaichandan@gmail.com
