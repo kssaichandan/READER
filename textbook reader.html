@@ -528,7 +528,18 @@
       el.columnsToggle.checked = !!s.columns; el.readerContent.classList.toggle('columns2', !!s.columns);
       saveJSON(STORAGE.settings, state.settings);
     }
+    function pruneDailyPagesKeys(){
+      // Keep today + the last 2 days; remove older book_reader_pages_* keys.
+      const keep = new Set();
+      for(let i=0;i<3;i++){ const d=new Date(); d.setDate(d.getDate()-i); const p=n=>String(n).padStart(2,'0'); keep.add(`book_reader_pages_${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`); }
+      try{
+        const stale = [];
+        for(let i=0;i<localStorage.length;i++){ const k = localStorage.key(i); if(k && /^book_reader_pages_\d{4}-\d{2}-\d{2}$/.test(k) && !keep.has(k)) stale.push(k); }
+        stale.forEach(k => { try{ localStorage.removeItem(k); }catch{} });
+      }catch{}
+    }
     function setStreak(){
+      pruneDailyPagesKeys();
       const t = todayKey(), last = state.stats.lastOpenDate;
       state.stats.pagesReadToday = loadJSON(dailyPagesKey(), []).length;
       if(last !== t){ state.stats.streak = last === yestKey() ? (state.stats.streak || 0) + 1 : 1; state.stats.lastOpenDate = t; saveJSON(STORAGE.stats, state.stats); }
@@ -581,7 +592,8 @@
       el.libraryGrid.innerHTML = state.library.slice().sort((a,b)=> (b.lastOpenAt||0)-(a.lastOpenAt||0)).map(book => {
         const c = cover(book.filename || book.title || 'book');
         const p = clamp(book.progress || 0, 0, 100).toFixed(0);
-        const openable = !!loadPersisted(book.filename || book.id) || state.memoryBooks.has(fileKey(book.filename || book.id));
+        const bk = fileKey(book.filename || book.id);
+        const openable = localStorage.getItem(bk) != null || sessionStorage.getItem(bk) != null || state.memoryBooks.has(bk);
         return `<article class="librarycard"><div class="cover-spine" style="background:linear-gradient(180deg, ${c.c1}, ${c.c2})"></div><div class="card-letter">${escapeHtml((book.title || book.filename || '?').trim().charAt(0).toUpperCase())}</div><div class="body"><h3 title="${escapeHtml(book.title || book.filename || '')}">${escapeHtml(book.title || book.filename || 'Untitled')}</h3><div class="meta"><span>${escapeHtml(book.filename || '')}</span><span>Added ${escapeHtml(book.addedAtLabel || formatTime(book.addedAt || Date.now()))}</span></div><div class="bar"><span style="width:${p}%"></span></div><div class="meta">${p}% read${book.lastPage ? ` - page ${book.lastPage}` : ''}</div><div class="actions"><button class="btn" data-open-book="${escapeHtml(book.id)}">${openable ? 'Continue Reading' : 'Re-upload File'}</button><button class="btn secondary" data-remove-book="${escapeHtml(book.id)}"><i class="fa-solid fa-trash"></i></button></div></div></article>`;
       }).join('');
     }
@@ -684,8 +696,8 @@
       const payload = { ...book, hasPersistedContent:true };
       const data = JSON.stringify(payload);
       let saved = false;
-      try{ localStorage.setItem(key, data); saved = true; }catch{}
-      try{ sessionStorage.setItem(key, data); saved = true; }catch{}
+      try{ localStorage.setItem(key, data); saved = true; }
+      catch{ try{ sessionStorage.setItem(key, data); saved = true; }catch{} }
       state.memoryBooks.set(key, cloneBook(payload));
       book.hasPersistedContent = saved;
       updateLibrary(book);
@@ -712,6 +724,8 @@
     }
     function saveCurrentPosition(){
       if(!state.activeBook) return;
+      // The demo/sample book is never persisted to the library.
+      if(state.activeBook.id === libraryId('sample.txt')) return;
       const page = getCurrentPage() + 1;
       const scroll = Math.round(window.scrollY);
       const progress = clamp(scroll / Math.max(1, document.documentElement.scrollHeight - innerHeight) * 100, 0, 100);
@@ -727,7 +741,24 @@
       const key = fileKey(state.activeBook.filename) + '_resume';
       const raw = localStorage.getItem(key) || sessionStorage.getItem(key);
       if(!raw) return;
-      try{ const r = JSON.parse(raw); if(typeof r.scroll === 'number'){ window.scrollTo({ top:r.scroll, behavior:'auto' }); toast(`Welcome back! Resuming from page ${r.page || 1}`); } }catch{}
+      try{
+        const r = JSON.parse(raw);
+        const total = pageEls().length;
+        // Prefer layout-independent restore by page number.
+        if(typeof r.page === 'number' && r.page >= 1 && total){
+          scrollToPage(clamp(r.page, 1, total));
+          toast(`Welcome back! Resuming from page ${r.page}`);
+        }else if(typeof r.progress === 'number'){
+          // Fall back to fractional progress restored proportionally.
+          const max = Math.max(1, document.documentElement.scrollHeight - innerHeight);
+          window.scrollTo({ top: clamp(r.progress, 0, 100) / 100 * max, behavior:'auto' });
+          toast(`Welcome back! Resuming where you left off`);
+        }else if(typeof r.scroll === 'number'){
+          // Legacy resume data: absolute scroll pixel.
+          window.scrollTo({ top:r.scroll, behavior:'auto' });
+          toast(`Welcome back! Resuming from page ${r.page || 1}`);
+        }
+      }catch{}
     }
     function showLanding(){ saveCurrentPosition(); stopSpeech(); closeAllOverlays(); setMode(false); el.landingView.classList.remove('hidden'); el.readerView.classList.add('hidden'); renderLibrary(); }
     function showReader(){ el.landingView.classList.add('hidden'); el.readerView.classList.remove('hidden'); window.scrollTo({ top:0, behavior:'auto' }); }
@@ -766,12 +797,12 @@
       const pages = state.currentPages || [];
       if(!pages.length){ el.readerEmpty.classList.remove('hidden'); el.readerContent.innerHTML = ''; el.pageInfo.textContent = 'Page 0 / 0'; return; }
       el.readerEmpty.classList.add('hidden');
-      el.readerContent.innerHTML = pages.map((p, i) => `<article class="page" id="page-${i+1}" data-page="${i+1}" data-plain="${escapeHtml(p.text || '')}"><div class="pageinner">${p.html || '<p>(blank page)</p>'}</div><div class="footer">${p.pageNumber || i+1}</div></article>`).join('');
+      el.readerContent.innerHTML = pages.map((p, i) => `<article class="page" id="page-${i+1}" data-page="${i+1}"><div class="pageinner">${p.html || '<p>(blank page)</p>'}</div><div class="footer">${p.pageNumber || i+1}</div></article>`).join('');
       [...el.readerContent.querySelectorAll('.page')].forEach(page => page.dataset.baseHtml = page.querySelector('.pageinner').innerHTML);
       bindPageEvents(); updatePageInfo();
       if(state.settings.columns) el.readerContent.classList.add('columns2'); else el.readerContent.classList.remove('columns2');
     }
-    function openBookData(book, triggerToast = true){
+    function openBookData(book, triggerToast = true, addToLibrary = true){
       state.sessionStart = Date.now();
       state.activeBook = { ...book, hasPersistedContent: !!book.hasPersistedContent };
       state.currentPages = book.pages || [];
@@ -781,7 +812,7 @@
       state.searchBackup = null;
       state.memoryBooks.set(fileKey(book.filename), cloneBook(state.activeBook));
       el.bookTitle.textContent = book.title || book.filename || 'Untitled';
-      updateLibrary(state.activeBook);
+      if(addToLibrary) updateLibrary(state.activeBook);
       showReader(); renderPages(); applyTypography(); renderBookmarks(); renderHighlightsList(); renderStats(); restoreFromSavedHighlights(); restoreResume(); updateProgress();
       if(triggerToast) toast(`Opened ${book.title || book.filename || 'book'}`);
     }
@@ -814,10 +845,14 @@
       if(el.streakFlame) el.streakFlame.textContent = state.stats.streak || 0;
       const totalWords = state.activeBook?.totalWords || 0;
       const wordsRead = Math.min(totalWords, getWordsRead());
-      const mins = Math.max(.01, (Date.now() - state.sessionStart) / 60000);
-      const wpm = Math.round(wordsRead / mins);
-      const remain = wpm ? Math.max(0, Math.ceil((totalWords - wordsRead) / wpm)) : 0;
-      const cards = [['Session time', formatDur(Date.now() - state.sessionStart)], ['Reading speed', wpm ? `${wpm} WPM` : '0 WPM'], ['Estimated time left', remain ? `${remain} min` : 'Done'], ['Pages read today', String(state.stats.pagesReadToday || 0)], ['Reading streak', `${state.stats.streak || 0} days`], ['Current page', `${getCurrentPage() + 1} / ${pageEls().length || 0}`]];
+      const elapsedMs = Date.now() - state.sessionStart;
+      const mins = elapsedMs / 60000;
+      // Require a minimum elapsed time before showing WPM; clamp to a realistic range.
+      const minMins = 0.5;
+      let wpm = 0, wpmReady = false;
+      if(mins >= minMins && wordsRead > 0){ wpm = clamp(Math.round(wordsRead / mins), 50, 1000); wpmReady = true; }
+      const remain = wpmReady && wpm ? Math.max(0, Math.ceil((totalWords - wordsRead) / wpm)) : 0;
+      const cards = [['Session time', formatDur(elapsedMs)], ['Reading speed', wpmReady ? `${wpm} WPM` : 'Calculating…'], ['Estimated time left', wpmReady ? (remain ? `${remain} min` : 'Done') : '—'], ['Pages read today', String(state.stats.pagesReadToday || 0)], ['Reading streak', `${state.stats.streak || 0} days`], ['Current page', `${getCurrentPage() + 1} / ${pageEls().length || 0}`]];
       el.statsGrid.innerHTML = cards.map(([l, v]) => `<div class="stat"><div class="label">${escapeHtml(l)}</div><div class="value">${escapeHtml(v)}</div></div>`).join('');
     }
     function isEditableElement(node = document.activeElement){ return ['INPUT', 'TEXTAREA', 'SELECT'].includes(node?.tagName) || !!node?.isContentEditable; }
@@ -1082,15 +1117,13 @@
       if(!meta) return;
       showLoading(`Opening ${meta.title || meta.filename || 'book'}...`);
       try{
+        // loadPersisted already checks localStorage, sessionStorage, and memoryBooks.
         const data = loadPersisted(meta.filename || meta.id);
         if(!data){
-          toast('This book is only available in the current session. Re-upload it to keep it permanently.');
-          const cached = state.memoryBooks.get(fileKey(meta.filename || meta.id));
-          if(cached) openBookData(cached, false);
-          else return;
-        }else{
-          openBookData(data, false);
+          toast('This book is no longer stored locally. Re-upload the file to read it again.');
+          return;
         }
+        openBookData(data, false);
         const resumeKey = fileKey(meta.filename || meta.id) + '_resume';
         if(meta.lastScroll && !localStorage.getItem(resumeKey) && !sessionStorage.getItem(resumeKey)) window.scrollTo({ top: meta.lastScroll, behavior:'auto' });
       }finally{
@@ -1137,7 +1170,7 @@ Everything stays in the browser. Nothing is uploaded anywhere.
 
 End of sample.`;
       const pages = splitText(text, 120);
-      openBookData({ id: libraryId('sample.txt'), title:'Sample Text', filename:'sample.txt', type:'TXT', addedAt:Date.now(), addedAtLabel:formatTime(Date.now()), pages, fullText:text, totalWords:text.split(/\s+/).filter(Boolean).length, totalPages:pages.length, hasPersistedContent:false }, true);
+      openBookData({ id: libraryId('sample.txt'), title:'Sample Text', filename:'sample.txt', type:'TXT', addedAt:Date.now(), addedAtLabel:formatTime(Date.now()), pages, fullText:text, totalWords:text.split(/\s+/).filter(Boolean).length, totalPages:pages.length, hasPersistedContent:false }, true, false);
     }
     function bindEvents(){
       el.fileInput.addEventListener('change', e => openFile(e.target.files[0]));
@@ -1216,7 +1249,7 @@ End of sample.`;
       document.querySelectorAll('.closeDrawer').forEach(btn => btn.addEventListener('click', closeAllOverlays));
       document.addEventListener('click', e => {
         const open = e.target.closest('[data-open-book]'); if(open) return openLibraryFromId(open.dataset.openBook);
-        const rm = e.target.closest('[data-remove-book]'); if(rm) { const book = state.library.find(b => b.id === rm.dataset.removeBook); state.library = state.library.filter(b => b.id !== rm.dataset.removeBook); saveJSON(STORAGE.library, state.library); clearPersistedBookData(book || { id:rm.dataset.removeBook }); renderLibrary(); if(state.activeBook && state.activeBook.id === rm.dataset.removeBook) showLanding(); return; }
+        const rm = e.target.closest('[data-remove-book]'); if(rm) { const book = state.library.find(b => b.id === rm.dataset.removeBook); if(!confirm(`Remove "${(book && (book.title || book.filename)) || 'this book'}" from the library? This cannot be undone.`)) return; state.library = state.library.filter(b => b.id !== rm.dataset.removeBook); saveJSON(STORAGE.library, state.library); clearPersistedBookData(book || { id:rm.dataset.removeBook }); renderLibrary(); if(state.activeBook && state.activeBook.id === rm.dataset.removeBook) showLanding(); return; }
         const gb = e.target.closest('[data-goto-bookmark]'); if(gb) return gotoBookmark(Number(gb.dataset.gotoBookmark));
         const db = e.target.closest('[data-del-bookmark]'); if(db) return deleteBookmark(Number(db.dataset.delBookmark));
         const gh = e.target.closest('[data-goto-highlight]'); if(gh) return gotoHighlight(Number(gh.dataset.gotoHighlight));
