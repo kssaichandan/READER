@@ -333,13 +333,14 @@
       <div class="hero-card card">
         <div style="position:relative;z-index:2">
           <h1>Read locally,<br>beautifully.</h1>
-          <p>Upload a TXT, PDF, EPUB, or HTML file and get a local-only reader with themes, notes, bookmarks, search, stats, and read-aloud.</p>
+          <p>Upload a TXT, PDF, EPUB, or HTML file and read it right here with themes, notes, bookmarks, search, stats, and read-aloud. Your books are parsed and stored in your browser &mdash; only the optional dictionary lookup contacts a third-party API, and just for the single word you select.</p>
           <div class="chips">
             <span class="chip"><i class="fa-solid fa-folder-open"></i> Single file</span>
             <span class="chip"><i class="fa-solid fa-bookmark"></i> Local marks</span>
             <span class="chip"><i class="fa-solid fa-highlighter"></i> Highlights</span>
             <span class="chip"><i class="fa-solid fa-volume-high"></i> Speed reading</span>
           </div>
+          <p class="chip" style="display:inline-flex;align-items:center;gap:8px;margin-top:16px;max-width:none"><i class="fa-solid fa-shield-halved" style="color:var(--accent)"></i> No account &middot; no tracking &middot; your files never leave your browser</p>
         </div>
         <svg class="hero-icon" width="280" height="280" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
             <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
@@ -665,7 +666,10 @@
     function sanitizeHtmlRoot(root){
       if(!root) return root;
       // Drop elements that can execute code, load remote resources, or hijack the page.
-      root.querySelectorAll('script,iframe,frame,frameset,object,embed,link,meta,base,style').forEach(n => n.remove());
+      // svg/math are foreign-content namespaces: they can carry <script>, animation
+      // elements and namespaced handlers that the attribute scrub may miss, so they
+      // are removed entirely rather than relying on attribute-level cleaning.
+      root.querySelectorAll('script,iframe,frame,frameset,object,embed,link,meta,base,style,svg,math').forEach(n => n.remove());
       // Scrub dangerous attributes from everything that remains.
       root.querySelectorAll('*').forEach(node => {
         [...node.attributes].forEach(attr => {
@@ -674,6 +678,7 @@
           const isUrlAttr = /^(href|xlink:href|src|action|formaction|data|background|poster|srcdoc)$/.test(name);
           if(name.startsWith('on')) node.removeAttribute(attr.name);              // inline event handlers
           else if(name === 'srcdoc') node.removeAttribute(attr.name);             // iframe srcdoc payloads
+          else if(name === 'style') node.removeAttribute(attr.name);              // inline CSS can spoof/redress the UI (e.g. fixed overlays)
           else if(isUrlAttr && /^(javascript|vbscript|data):/.test(value) && !/^data:image\//.test(value)) node.removeAttribute(attr.name);
         });
       });
