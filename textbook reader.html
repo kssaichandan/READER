@@ -506,8 +506,13 @@
         <div class="exportwrap">
           <button class="btn secondary icon-only" id="exportBtn" title="Export" aria-label="Export"><i class="fa-solid fa-file-export"></i></button>
           <div class="exportmenu" id="exportMenu">
-            <button id="exportNotesBtn"><i class="fa-solid fa-file-lines"></i> Export Highlights</button>
+            <button id="exportNotesBtn"><i class="fa-solid fa-file-lines"></i> Export Highlights (TXT)</button>
+            <button id="exportNotesMdBtn"><i class="fa-brands fa-markdown"></i> Export Highlights (Markdown)</button>
+            <button id="exportNotesJsonBtn"><i class="fa-solid fa-code"></i> Export Highlights (JSON)</button>
             <button id="printBtn"><i class="fa-solid fa-print"></i> Print Book</button>
+            <button id="exportLibraryBtn"><i class="fa-solid fa-box-archive"></i> Export Library (backup)</button>
+            <button id="importLibraryBtn"><i class="fa-solid fa-upload"></i> Import Library (restore)</button>
+            <input id="importLibraryInput" type="file" accept=".json,application/json" hidden>
           </div>
         </div>
         <button class="btn secondary icon-only" id="helpToolbarBtn" title="Keyboard Shortcuts" aria-label="Keyboard shortcuts" aria-haspopup="dialog" aria-expanded="false"><i class="fa-regular fa-circle-question" aria-hidden="true"></i></button>
@@ -625,7 +630,53 @@
       helpModal:$('#helpModal'), helpGrid:$('#helpGrid')
     };
     function loadJSON(key, fallback){ try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }catch{ return fallback; } }
-    function saveJSON(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
+    function isQuotaError(err){
+      return !!err && (err.name === 'QuotaExceededError' || err.name === 'NS_ERROR_DOM_QUOTA_REACHED' || err.code === 22 || err.code === 1014);
+    }
+    let quotaBannerShown = false;
+    function saveJSON(key, value){
+      try{
+        localStorage.setItem(key, JSON.stringify(value));
+        return true;
+      }catch(err){
+        if(isQuotaError(err)){
+          if(!quotaBannerShown){
+            quotaBannerShown = true;
+            showPersistBanner('Browser storage is full. Recent changes may not be saved. Export a library backup to keep your data safe.');
+          }
+          toast('Storage full - changes may not be saved');
+        }else{
+          console.error('saveJSON failed', err);
+          toast('Could not save - storage error');
+        }
+        return false;
+      }
+    }
+    // Persistent, dismissible notice banner (used for non-persistence + quota warnings).
+    function showPersistBanner(msg){
+      let banner = document.getElementById('persistBanner');
+      if(!banner){
+        banner = document.createElement('div');
+        banner.id = 'persistBanner';
+        banner.setAttribute('role', 'alert');
+        banner.style.cssText = 'position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:130;max-width:min(680px,calc(100vw - 16px));display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-radius:14px;background:rgba(28,28,28,.96);color:#fff;border-left:3px solid #E8936A;box-shadow:0 8px 28px rgba(0,0,0,.28);font-family:inherit;font-size:.92rem;line-height:1.45;';
+        document.body.appendChild(banner);
+      }
+      banner.innerHTML = '';
+      const icon = document.createElement('i');
+      icon.className = 'fa-solid fa-triangle-exclamation';
+      icon.style.cssText = 'color:#E8936A;margin-top:2px;flex:0 0 auto;';
+      const text = document.createElement('div');
+      text.style.flex = '1';
+      text.textContent = msg;
+      const close = document.createElement('button');
+      close.className = 'btn secondary icon-only';
+      close.setAttribute('aria-label', 'Dismiss notice');
+      close.style.cssText = 'width:28px;height:28px;min-height:28px;flex:0 0 auto;border-radius:50%;';
+      close.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+      close.addEventListener('click', () => banner.remove());
+      banner.append(icon, text, close);
+    }
     function escapeHtml(s){ return String(s ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
     function hashString(str){ let h = 5381; for(let i=0;i<str.length;i++) h = ((h<<5)+h) + str.charCodeAt(i); return h >>> 0; }
     function cover(seed){ const h = hashString(seed) % 360; return { c1:`hsl(${h} 68% 54%)`, c2:`hsl(${(h+32)%360} 64% 40%)` }; }
@@ -953,6 +1004,14 @@
       return pages;
     }
     async function parseFile(file){
+      // Pre-parse size check: very large files are slow to parse and likely too big to persist.
+      const LARGE_FILE_BYTES = 35 * 1024 * 1024;
+      if(file && file.size > LARGE_FILE_BYTES){
+        const mb = (file.size / (1024 * 1024)).toFixed(1);
+        if(!confirm(`This file is ${mb} MB. Large files may be slow to open and might not save to your library (browser storage limit). Continue anyway?`)){
+          throw new Error('Import cancelled');
+        }
+      }
       const ext = (file.name.split('.').pop() || '').toLowerCase();
       const meta = { id:libraryId(file.name) + '_s' + (file.size || 0), size:file.size || 0, title:file.name.replace(/\.[^.]+$/,''), filename:file.name, type:ext.toUpperCase(), addedAt:Date.now(), addedAtLabel:formatTime(Date.now()), hasPersistedContent:false };
       showLoading(`Parsing ${meta.type} book...`);
@@ -973,13 +1032,20 @@
       const key = bookKey(book);
       const payload = { ...book, hasPersistedContent:true };
       const data = JSON.stringify(payload);
-      let saved = false;
-      try{ localStorage.setItem(key, data); saved = true; }
-      catch{ try{ sessionStorage.setItem(key, data); saved = true; }catch{} }
+      let savedToLocal = false, savedToSession = false;
+      try{ localStorage.setItem(key, data); savedToLocal = true; }
+      catch{ try{ sessionStorage.setItem(key, data); savedToSession = true; }catch{} }
       state.memoryBooks.set(key, cloneBook(payload));
-      book.hasPersistedContent = saved;
+      // Only localStorage survives a tab close; sessionStorage/memory do not.
+      book.hasPersistedContent = savedToLocal;
       updateLibrary(book);
-      toast(book.hasPersistedContent ? `Saved ${book.title} to the library` : `Loaded ${book.title}. Large books may not persist.`);
+      if(savedToLocal){
+        toast(`Saved ${book.title} to the library`);
+      }else{
+        const where = savedToSession ? 'only for this browser tab' : 'only in memory';
+        toast(`Loaded ${book.title}. It will not persist.`);
+        showPersistBanner(`"${book.title || book.filename || 'This book'}" could not be saved to permanent storage and is kept ${where}. It will be lost when you close the tab. Use Export Library (backup) to keep a copy.`);
+      }
     }
     function loadPersisted(book){
       const key = bookKey(book);
@@ -1377,7 +1443,41 @@
     }
     function saveNote(){ addHighlight(state.pendingSelection?.color || '#FFD700', el.noteText.value.trim()); }
     function addBookmark(){ if(!state.activeBook) return; const b = { page:getCurrentPage() + 1, scroll:Math.round(scrollY), time:Date.now() }; state.bookmarks.push(b); saveJSON(bookKey(state.activeBook) + '_bookmarks', state.bookmarks); renderBookmarks(); toast('Bookmark saved!'); }
-    function deleteBookmark(i){ state.bookmarks.splice(state.bookmarks.length - 1 - i, 1); saveJSON(bookKey(state.activeBook) + '_bookmarks', state.bookmarks); renderBookmarks(); }
+    // Toast with an "Undo" action. onUndo runs if the user clicks within ~6s.
+    function undoToast(msg, onUndo){
+      const d = document.createElement('div');
+      d.className = 'toast';
+      d.style.cssText = 'animation:none;opacity:1;display:flex;align-items:center;gap:14px;pointer-events:auto;';
+      const span = document.createElement('span');
+      span.style.flex = '1';
+      span.textContent = msg;
+      const btn = document.createElement('button');
+      btn.className = 'btn secondary';
+      btn.style.cssText = 'min-height:30px;padding:4px 12px;';
+      btn.textContent = 'Undo';
+      let done = false;
+      const finish = () => { if(done) return; done = true; clearTimeout(timer); d.remove(); };
+      btn.addEventListener('click', () => { if(done) return; done = true; clearTimeout(timer); d.remove(); try{ onUndo(); }catch(e){ console.error(e); } });
+      const timer = setTimeout(finish, 6000);
+      d.append(span, btn);
+      el.toastwrap.appendChild(d);
+    }
+    function deleteBookmark(i){
+      const realIndex = state.bookmarks.length - 1 - i;
+      const removed = state.bookmarks[realIndex];
+      if(!removed) return;
+      const bookRef = state.activeBook;
+      state.bookmarks.splice(realIndex, 1);
+      saveJSON(bookKey(bookRef) + '_bookmarks', state.bookmarks);
+      renderBookmarks();
+      undoToast('Bookmark deleted', () => {
+        if(state.activeBook !== bookRef) return;
+        state.bookmarks.splice(Math.min(realIndex, state.bookmarks.length), 0, removed);
+        saveJSON(bookKey(bookRef) + '_bookmarks', state.bookmarks);
+        renderBookmarks();
+        toast('Bookmark restored');
+      });
+    }
     function gotoBookmark(i){
       const b = state.bookmarks[state.bookmarks.length - 1 - i];
       if(!b) return closeAllOverlays();
@@ -1385,7 +1485,24 @@
       else scrollToPage(b.page || 1);
       closeAllOverlays();
     }
-    function deleteHighlight(i){ state.highlights.splice(state.highlights.length - 1 - i, 1); saveJSON(bookKey(state.activeBook) + '_highlights', state.highlights); renderHighlightsList(); restoreFromSavedHighlights(); }
+    function deleteHighlight(i){
+      const realIndex = state.highlights.length - 1 - i;
+      const removed = state.highlights[realIndex];
+      if(!removed) return;
+      const bookRef = state.activeBook;
+      state.highlights.splice(realIndex, 1);
+      saveJSON(bookKey(bookRef) + '_highlights', state.highlights);
+      renderHighlightsList();
+      restoreFromSavedHighlights();
+      undoToast('Highlight deleted', () => {
+        if(state.activeBook !== bookRef) return;
+        state.highlights.splice(Math.min(realIndex, state.highlights.length), 0, removed);
+        saveJSON(bookKey(bookRef) + '_highlights', state.highlights);
+        renderHighlightsList();
+        restoreFromSavedHighlights();
+        toast('Highlight restored');
+      });
+    }
     function gotoHighlight(i){
       const h = state.highlights[state.highlights.length - 1 - i];
       if(!h) return closeAllOverlays();
@@ -1394,13 +1511,128 @@
       else scrollToPage(h.page || 1);
       closeAllOverlays();
     }
-    function exportHighlights(){
-      if(!state.activeBook) return;
-      const lines = [`Highlights and Notes for ${state.activeBook.title || state.activeBook.filename || 'Book'}`, `Generated: ${formatTime(Date.now())}`, ''];
-      state.highlights.forEach((h, i) => { lines.push(`${i + 1}. Page ${h.page || 1}`); lines.push(`   Highlight: ${h.text || ''}`); lines.push(`   Color: ${h.color || ''}`); if(h.note) lines.push(`   Note: ${h.note}`); lines.push(''); });
-      const blob = new Blob([lines.join('\n')], { type:'text/plain;charset=utf-8' }); const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = `${(state.activeBook.title || 'book').replace(/[^a-z0-9]+/gi,'_')}_highlights.txt`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); toast('Highlights exported');
+    // Triggers a browser download for the given content/blob.
+    function downloadFile(filename, content, mime){
+      const blob = content instanceof Blob ? content : new Blob([content], { type: mime || 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
+    function exportHighlights(format = 'txt'){
+      if(!state.activeBook) return;
+      if(!state.highlights.length){ toast('No highlights to export'); return; }
+      const bookName = state.activeBook.title || state.activeBook.filename || 'Book';
+      const safeName = (state.activeBook.title || 'book').replace(/[^a-z0-9]+/gi,'_');
+      if(format === 'json'){
+        const payload = {
+          book: bookName,
+          filename: state.activeBook.filename || '',
+          generated: new Date().toISOString(),
+          count: state.highlights.length,
+          highlights: state.highlights.map(h => ({ page:h.page || 1, text:h.text || '', color:h.color || '', note:h.note || '', time:h.time || null }))
+        };
+        downloadFile(`${safeName}_highlights.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
+        toast('Highlights exported (JSON)');
+        return;
+      }
+      if(format === 'md'){
+        const lines = [`# Highlights and Notes — ${bookName}`, '', `*Generated: ${formatTime(Date.now())}*`, ''];
+        state.highlights.forEach((h, i) => {
+          lines.push(`## ${i + 1}. Page ${h.page || 1}`);
+          lines.push('');
+          lines.push(`> ${String(h.text || '').replace(/\n/g, '\n> ')}`);
+          lines.push('');
+          if(h.color) lines.push(`- Color: \`${h.color}\``);
+          if(h.note) lines.push(`- Note: ${h.note}`);
+          lines.push('');
+        });
+        downloadFile(`${safeName}_highlights.md`, lines.join('\n'), 'text/markdown;charset=utf-8');
+        toast('Highlights exported (Markdown)');
+        return;
+      }
+      const lines = [`Highlights and Notes for ${bookName}`, `Generated: ${formatTime(Date.now())}`, ''];
+      state.highlights.forEach((h, i) => { lines.push(`${i + 1}. Page ${h.page || 1}`); lines.push(`   Highlight: ${h.text || ''}`); lines.push(`   Color: ${h.color || ''}`); if(h.note) lines.push(`   Note: ${h.note}`); lines.push(''); });
+      downloadFile(`${safeName}_highlights.txt`, lines.join('\n'), 'text/plain;charset=utf-8');
+      toast('Highlights exported');
+    }
+    // Gathers every book_reader_* key from both storages into one backup object.
+    function exportLibraryBackup(){
+      const backup = { type:'book_reader_backup', version:1, generated:new Date().toISOString(), local:{}, session:{} };
+      let count = 0;
+      try{
+        for(let i=0;i<localStorage.length;i++){
+          const k = localStorage.key(i);
+          if(k && k.startsWith('book_reader_')){ backup.local[k] = localStorage.getItem(k); count++; }
+        }
+      }catch(e){ console.error(e); }
+      try{
+        for(let i=0;i<sessionStorage.length;i++){
+          const k = sessionStorage.key(i);
+          if(k && k.startsWith('book_reader_') && !(k in backup.local)){ backup.session[k] = sessionStorage.getItem(k); count++; }
+        }
+      }catch(e){ console.error(e); }
+      if(!count){ toast('Nothing to back up yet'); return; }
+      const stamp = new Date().toISOString().slice(0,10);
+      downloadFile(`book_reader_backup_${stamp}.json`, JSON.stringify(backup, null, 2), 'application/json;charset=utf-8');
+      toast(`Library backup exported (${count} items)`);
+    }
+    // Restores keys from a backup JSON file produced by exportLibraryBackup.
+    function importLibraryBackup(file){
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        let data;
+        try{ data = JSON.parse(String(reader.result || '')); }
+        catch{ toast('Invalid backup file'); return; }
+        const localData = data && typeof data.local === 'object' && data.local ? data.local : null;
+        const sessionData = data && typeof data.session === 'object' && data.session ? data.session : null;
+        if(data && data.type !== 'book_reader_backup' && !localData && !sessionData){
+          toast('That file is not a Book Reader backup');
+          return;
+        }
+        const localKeys = localData ? Object.keys(localData) : [];
+        const sessionKeys = sessionData ? Object.keys(sessionData) : [];
+        if(!localKeys.length && !sessionKeys.length){ toast('Backup contained no data'); return; }
+        if(!confirm(`Restore ${localKeys.length + sessionKeys.length} item(s) from this backup? Existing entries with the same name will be overwritten.`)) return;
+        let restored = 0, failed = 0;
+        localKeys.forEach(k => {
+          if(!k.startsWith('book_reader_')) return;
+          try{ localStorage.setItem(k, localData[k]); restored++; }
+          catch(err){
+            try{ sessionStorage.setItem(k, localData[k]); restored++; }
+            catch{ failed++; }
+          }
+        });
+        sessionKeys.forEach(k => {
+          if(!k.startsWith('book_reader_') || k in (localData || {})) return;
+          try{ sessionStorage.setItem(k, sessionData[k]); restored++; }catch{ failed++; }
+        });
+        if(failed){
+          showPersistBanner(`${failed} backup item(s) could not be restored (browser storage may be full). The page will reload with what was restored.`);
+        }
+        toast(`Restored ${restored} item(s). Reloading...`);
+        setTimeout(() => location.reload(), failed ? 2200 : 900);
+      };
+      reader.onerror = () => toast('Could not read backup file');
+      reader.readAsText(file);
+    }
+    // Wires the export-menu items added for backup/restore and richer annotation exports.
+    function bindExportMenuExtras(){
+      const md = document.getElementById('exportNotesMdBtn');
+      const json = document.getElementById('exportNotesJsonBtn');
+      const exportLib = document.getElementById('exportLibraryBtn');
+      const importLib = document.getElementById('importLibraryBtn');
+      const importInput = document.getElementById('importLibraryInput');
+      if(md) md.addEventListener('click', () => exportHighlights('md'));
+      if(json) json.addEventListener('click', () => exportHighlights('json'));
+      if(exportLib) exportLib.addEventListener('click', exportLibraryBackup);
+      if(importLib && importInput){
+        importLib.addEventListener('click', () => importInput.click());
+        importInput.addEventListener('change', e => { importLibraryBackup(e.target.files && e.target.files[0]); importInput.value = ''; });
+      }
+    }
+    bindExportMenuExtras();
     function setTTSButtonState(mode = 'stopped'){
       el.ttsPlay.innerHTML = mode === 'playing' ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
     }
@@ -1640,7 +1872,38 @@ End of sample.`;
       document.querySelectorAll('.closeDrawer').forEach(btn => btn.addEventListener('click', closeAllOverlays));
       document.addEventListener('click', e => {
         const open = e.target.closest('[data-open-book]'); if(open) return openLibraryFromId(open.dataset.openBook);
-        const rm = e.target.closest('[data-remove-book]'); if(rm) { const book = state.library.find(b => b.id === rm.dataset.removeBook); if(!confirm(`Remove "${(book && (book.title || book.filename)) || 'this book'}" from the library? This cannot be undone.`)) return; state.library = state.library.filter(b => b.id !== rm.dataset.removeBook); saveJSON(STORAGE.library, state.library); clearPersistedBookData(book || { id:rm.dataset.removeBook }); renderLibrary(); if(state.activeBook && state.activeBook.id === rm.dataset.removeBook) showLanding(); return; }
+        const rm = e.target.closest('[data-remove-book]'); if(rm) {
+          const removeId = rm.dataset.removeBook;
+          const book = state.library.find(b => b.id === removeId);
+          if(!confirm(`Remove "${(book && (book.title || book.filename)) || 'this book'}" from the library?`)) return;
+          // Snapshot the book's persisted content/marks so the deletion can be undone.
+          const bk = bookKey(book || { id:removeId });
+          const snapshot = { record:book ? { ...book } : null, keys:{} };
+          [bk, bk + '_resume', bk + '_bookmarks', bk + '_highlights'].forEach(k => {
+            const lv = localStorage.getItem(k), sv = sessionStorage.getItem(k);
+            if(lv != null) snapshot.keys[k] = { store:'local', value:lv };
+            else if(sv != null) snapshot.keys[k] = { store:'session', value:sv };
+          });
+          const memorySnapshot = state.memoryBooks.get(bk);
+          state.library = state.library.filter(b => b.id !== removeId);
+          saveJSON(STORAGE.library, state.library);
+          clearPersistedBookData(book || { id:removeId });
+          renderLibrary();
+          if(state.activeBook && state.activeBook.id === removeId) showLanding();
+          undoToast('Book removed from library', () => {
+            Object.entries(snapshot.keys).forEach(([k, info]) => {
+              try{ (info.store === 'local' ? localStorage : sessionStorage).setItem(k, info.value); }catch{}
+            });
+            if(memorySnapshot) state.memoryBooks.set(bk, memorySnapshot);
+            if(snapshot.record && !state.library.some(b => b.id === snapshot.record.id)){
+              state.library.unshift(snapshot.record);
+              saveJSON(STORAGE.library, state.library);
+            }
+            renderLibrary();
+            toast('Book restored');
+          });
+          return;
+        }
         const gb = e.target.closest('[data-goto-bookmark]'); if(gb) return gotoBookmark(Number(gb.dataset.gotoBookmark));
         const db = e.target.closest('[data-del-bookmark]'); if(db) return deleteBookmark(Number(db.dataset.delBookmark));
         const gh = e.target.closest('[data-goto-highlight]'); if(gh) return gotoHighlight(Number(gh.dataset.gotoHighlight));
