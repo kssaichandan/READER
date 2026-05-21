@@ -478,7 +478,7 @@
       stats: loadJSON(STORAGE.stats, {lastOpenDate:'',streak:0,pagesReadToday:0}),
       activeBook:null, currentPages:[], bookmarks:[], highlights:[], searchBackup:null,
       search:{query:'',matches:[],index:-1}, pendingSelection:null, dictAbort:null,
-      sessionStart:Date.now(), sessionPages:new Set(), tts:{utterance:null,voices:[],baseHtml:null}, panels:new Set(), autoSaveTimer:null, memoryBooks:new Map(), selectionTimer:null, selectionSeq:0, scrollRaf:null
+      sessionStart:Date.now(), tts:{utterance:null,voices:[],baseHtml:null}, autoSaveTimer:null, memoryBooks:new Map(), selectionTimer:null, selectionSeq:0, scrollRaf:null
     };
     const el = { settingsBtn:$('#settingsBtn'), settingsDrawer:$('#settingsDrawer'), ttsPlayer:$('#ttsPlayer'), progressRing:$('#progressRing'), progressText:$('#progressText'), streakFlame:$('#streakFlame'),
       landingView:$('#landingView'), readerView:$('#readerView'), libraryGrid:$('#libraryGrid'),
@@ -487,7 +487,7 @@
       searchbar:$('#searchbar'), searchInput:$('#searchInput'), prevMatch:$('#prevMatch'), nextMatch:$('#nextMatch'), closeSearch:$('#closeSearch'), searchCount:$('#searchCount'),
       popup:$('#popup'), noteRow:$('#noteRow'), noteText:$('#noteText'), addNote:$('#addNote'), lookupSel:$('#lookupSel'), saveNote:$('#saveNote'), copySel:$('#copySel'),
       dict:$('#dict'), dictWord:$('#dictWord'), dictPhonetic:$('#dictPhonetic'), dictBody:$('#dictBody'), closeDictBtn:$('#closeDictBtn'), dictSpeak:$('#dictSpeak'),
-      toastwrap:$('#toastwrap'), focusExit:$('#focusExit'), landing:$('#landingView'), readerContent:$('#readerContent'), readerEmpty:$('#readerEmpty'),
+      toastwrap:$('#toastwrap'), focusExit:$('#focusExit'), readerContent:$('#readerContent'), readerEmpty:$('#readerEmpty'),
       bookTitle:$('#bookTitle'), pageInfo:$('#pageInfo'), progressBar:$('#progressBar'), toolbar:$('#toolbar'),
       toLibrary:$('#toLibrary'), bookmarkBtn:$('#bookmarkBtn'), highlightsBtn:$('#highlightsBtn'), statsBtn:$('#statsBtn'), searchBtn:$('#searchBtn'),
       ttsBtn:$('#ttsBtn'), exportBtn:$('#exportBtn'), exportMenu:$('#exportMenu'), exportNotesBtn:$('#exportNotesBtn'), printBtn:$('#printBtn'), helpBtn:$('#helpBtn'), helpClose:$('#helpClose'), focusToggle:$('#focusToggle'),
@@ -717,7 +717,7 @@
       for(let i=1;i<=pdf.numPages;i++){ const p = await pdf.getPage(i); const content = await p.getTextContent(); const lines = groupPdf(content.items); const text = lines.map(l=>l.text).join('\n'); pages.push({ html: lines.map(l => `<p>${escapeHtml(l.text)}</p>`).join('') || '<p>(blank page)</p>', text, words:text.split(/\s+/).filter(Boolean).length, pageNumber:i }); }
       return pages;
     }
-    async function parseEpub(buf, name){
+    async function parseEpub(buf){
       if(!hasEpubSupport()) throw new Error('EPUB support is unavailable right now. Reload the page and try again.');
       const book = ePub(buf);
       await book.ready;
@@ -741,7 +741,7 @@
       if(ext === 'txt'){ fullText = String(await file.text()); pages = splitText(fullText, 500); }
       else if(ext === 'html' || ext === 'htm'){ const parsed = stripHtml(await file.text()); pages = [{ html:parsed.html, text:parsed.text, words:parsed.text.split(/\s+/).filter(Boolean).length }]; fullText = parsed.text; }
       else if(ext === 'pdf'){ pages = await parsePdf(await file.arrayBuffer()); fullText = pages.map(p=>p.text).join('\n\n'); }
-      else if(ext === 'epub'){ pages = await parseEpub(await file.arrayBuffer(), file.name); fullText = pages.map(p=>p.text).join('\n\n'); }
+      else if(ext === 'epub'){ pages = await parseEpub(await file.arrayBuffer()); fullText = pages.map(p=>p.text).join('\n\n'); }
       else throw new Error('Unsupported file type');
       const book = { ...meta, pages, fullText, totalWords: fullText.split(/\s+/).filter(Boolean).length, totalPages: pages.length };
       persistBook(book);
@@ -822,13 +822,34 @@
     function showLanding(){ saveCurrentPosition(); stopSpeech(); closeAllOverlays(); setMode(false); el.landingView.classList.remove('hidden'); el.readerView.classList.add('hidden'); renderLibrary(); }
     function showReader(){ el.landingView.classList.add('hidden'); el.readerView.classList.remove('hidden'); window.scrollTo({ top:0, behavior:'auto' }); }
     function pageEls(){ return [...el.readerContent.querySelectorAll('.page')]; }
-    function getCurrentPage(){
+    let pageOffsetCache = null;
+    function buildPageOffsetCache(){
       const pages = pageEls();
-      if(!pages.length) return 0;
+      pageOffsetCache = { first: pages[0] || null, count: pages.length, height: document.documentElement.scrollHeight, tops: pages.map(p => p.getBoundingClientRect().top + scrollY) };
+      return pageOffsetCache;
+    }
+    function getPageOffsets(){
+      const current = pageEls();
+      // rebuild when pages were re-rendered (count/identity changed) or layout height changed (font/columns/resize)
+      if(!pageOffsetCache || pageOffsetCache.count !== current.length || pageOffsetCache.first !== (current[0] || null) || pageOffsetCache.height !== document.documentElement.scrollHeight) return buildPageOffsetCache();
+      return pageOffsetCache;
+    }
+    function invalidatePageOffsetCache(){ pageOffsetCache = null; }
+    window.addEventListener('resize', invalidatePageOffsetCache, { passive:true });
+    function getCurrentPage(){
+      const cache = getPageOffsets();
+      const tops = cache.tops;
+      if(!tops.length) return 0;
       const mid = window.scrollY + innerHeight * .45;
-      let best = 0, dist = Infinity;
-      pages.forEach((page, i) => { const top = page.getBoundingClientRect().top + scrollY; const d = Math.abs(top - mid); if(d < dist){ dist = d; best = i; } });
-      return best;
+      // binary search for the last page whose top is <= mid
+      let lo = 0, hi = tops.length - 1, idx = 0;
+      while(lo <= hi){
+        const m = (lo + hi) >> 1;
+        if(tops[m] <= mid){ idx = m; lo = m + 1; } else hi = m - 1;
+      }
+      // pick the nearer of idx and idx+1
+      if(idx + 1 < tops.length && Math.abs(tops[idx + 1] - mid) < Math.abs(tops[idx] - mid)) idx += 1;
+      return idx;
     }
     function scrollToPage(n){
       const pages = pageEls();
