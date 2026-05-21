@@ -223,6 +223,10 @@
 
     .pageinner { position: relative; padding: 48px 56px 64px; font-family: var(--reader-font); font-size: var(--font-size); line-height: var(--line-height); letter-spacing: var(--letter-spacing); word-spacing: var(--word-spacing); color: var(--page-fg); transition: background .3s, color .3s; }
     .pageinner p { margin: 0 0 var(--paragraph-spacing); }
+    .pageinner img { max-width: 100%; height: auto; display: block; margin: 1.2em auto; border-radius: 6px; }
+    .pdf-figure { margin: 1.4em 0; text-align: center; }
+    .pdf-figure img { box-shadow: 0 2px 12px rgba(0,0,0,.18); }
+    .pdf-figure figcaption { color: var(--muted); font-size: .82rem; margin-top: .4em; font-variant: small-caps; }
     .footer { position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); color: var(--muted); font-size: .85rem; font-variant: small-caps; }
     .footer::before, .footer::after { content: "\2014"; margin:0 8px;}
 
@@ -1118,13 +1122,118 @@
         return { text: text.trim() };
       });
     }
+    // Resolve a named pdf.js object. Image XObjects only populate page.objs once the
+    // page has been rendered, so callers render first; this still guards with a
+    // timeout so a never-resolving objs.get callback can never hang PDF parsing.
+    function getPdfObj(objs, name){
+      return new Promise(res => {
+        let done = false;
+        const finish = v => { if(!done){ done = true; res(v); } };
+        try{
+          if(objs && objs.has && objs.has(name)) return finish(objs.get(name));
+          if(objs && objs.get){
+            objs.get(name, finish);
+            setTimeout(() => finish(null), 4000);
+            return;
+          }
+          finish(null);
+        }catch(e){ finish(null); }
+      });
+    }
+    // Convert a pdf.js image object to a PNG data URL; returns null on any failure.
+    function pdfImageToDataUrl(img){
+      try{
+        if(!img) return null;
+        const w = img.width|0, h = img.height|0;
+        if(w < 1 || h < 1) return null;
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if(img.bitmap){
+          ctx.drawImage(img.bitmap, 0, 0);
+        } else if(img.data){
+          const src = img.data, total = w * h;
+          const rgba = new Uint8ClampedArray(total * 4);
+          if(src.length === total * 4){
+            rgba.set(src);
+          } else if(src.length === total * 3){
+            for(let i=0,j=0;i<total;i++,j+=3){ const o=i*4; rgba[o]=src[j]; rgba[o+1]=src[j+1]; rgba[o+2]=src[j+2]; rgba[o+3]=255; }
+          } else if(src.length === total){
+            for(let i=0;i<total;i++){ const o=i*4, g=src[i]; rgba[o]=g; rgba[o+1]=g; rgba[o+2]=g; rgba[o+3]=255; }
+          } else { return null; }
+          ctx.putImageData(new ImageData(rgba, w, h), 0, 0);
+        } else { return null; }
+        return canvas.toDataURL('image/png');
+      }catch(e){ return null; }
+    }
+    // Extract raster images painted on a PDF page; returns an array of data URLs.
+    // The page must already have been rendered so its image XObjects are resolved.
+    async function extractPdfPageImages(page){
+      const urls = [];
+      try{
+        const opList = await page.getOperatorList();
+        const fns = opList.fnArray || [], args = opList.argsArray || [];
+        const seen = new Set();
+        for(let i=0;i<fns.length;i++){
+          try{
+            let img = null;
+            if(fns[i] === pdfjsLib.OPS.paintImageXObject){
+              const name = args[i] && args[i][0];
+              if(typeof name !== 'string' || seen.has(name)) continue;
+              seen.add(name);
+              img = await getPdfObj(page.objs, name);
+            } else if(fns[i] === pdfjsLib.OPS.paintInlineImageXObject){
+              img = args[i] && args[i][0];
+            } else { continue; }
+            if(!img) continue;
+            if((img.width|0) < 20 || (img.height|0) < 20) continue; // skip icons / spacer pixels
+            const url = pdfImageToDataUrl(img);
+            if(url) urls.push(url);
+          }catch(e){ /* skip this image, keep going */ }
+        }
+      }catch(e){ /* operator list unavailable: fall back to text only */ }
+      return urls;
+    }
     async function parsePdf(buf){
       if(!hasPdfSupport()) throw new Error('PDF support is unavailable right now. Reload the page and try again.');
       pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
       const loadingTask = pdfjsLib.getDocument({ data: buf, isEvalSupported: false });
       const pdf = await loadingTask.promise;
       const pages = [];
-      for(let i=1;i<=pdf.numPages;i++){ const p = await pdf.getPage(i); const content = await p.getTextContent(); const lines = groupPdf(content.items); const text = lines.map(l=>l.text).join('\n'); pages.push({ html: lines.map(l => `<p>${escapeHtml(l.text)}</p>`).join('') || '<p>(blank page)</p>', text, words:text.split(/\s+/).filter(Boolean).length, pageNumber:i }); }
+      for(let i=1;i<=pdf.numPages;i++){
+        const p = await pdf.getPage(i);
+        const content = await p.getTextContent();
+        const lines = groupPdf(content.items);
+        const text = lines.map(l=>l.text).join('\n');
+        let html = lines.map(l => `<p>${escapeHtml(l.text)}</p>`).join('');
+        // Render the page once: this resolves the page's image XObjects into
+        // page.objs (so extraction can read them) and gives us a scanned-page
+        // fallback canvas. Wrapped so a render failure never aborts the PDF.
+        let renderCanvas = null;
+        try{
+          const vp = p.getViewport({ scale: 2 });
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(vp.width));
+          canvas.height = Math.max(1, Math.round(vp.height));
+          await p.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+          renderCanvas = canvas;
+        }catch(e){ renderCanvas = null; }
+        // Extract images for this page; never let image work abort PDF parsing.
+        let images = [];
+        try{ images = await extractPdfPageImages(p); }catch(e){ images = []; }
+        if(images.length){
+          html += images.map(url => `<figure class="pdf-figure"><img src="${url}" alt="Figure from page ${i}" loading="lazy"></figure>`).join('');
+        }
+        // Scanned-page fallback: no text and no images -> use the rendered page image.
+        if(!html){
+          let fallback = null;
+          try{ if(renderCanvas) fallback = renderCanvas.toDataURL('image/jpeg', 0.85); }catch(e){ fallback = null; }
+          html = fallback
+            ? `<figure class="pdf-figure"><img src="${fallback}" alt="Page ${i}" loading="lazy"></figure>`
+            : '<p>(blank page)</p>';
+        }
+        pages.push({ html, text, words:text.split(/\s+/).filter(Boolean).length, pageNumber:i });
+      }
       return pages;
     }
     async function parseEpub(buf){
