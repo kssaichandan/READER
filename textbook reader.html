@@ -955,10 +955,21 @@
       }
       return wrapFirst(root, highlight.text, 'user', { backgroundColor:highlight.color }, highlight.id, highlight.note);
     }
+    function rangeIntersectsMark(range, root){
+      if(!range || !root) return false;
+      return [...root.querySelectorAll('mark.user, mark.search')].some(mark => {
+        try{
+          const mr = document.createRange();
+          mr.selectNode(mark);
+          return range.compareBoundaryPoints(Range.END_TO_START, mr) < 0 && range.compareBoundaryPoints(Range.START_TO_END, mr) > 0;
+        }catch{ return false; }
+      });
+    }
     function addHighlight(color, note = ''){
       const s = state.pendingSelection; if(!s) return;
       try{
         const root = s.page.querySelector('.pageinner');
+        if(rangeIntersectsMark(s.range, root)){ toast('Selection overlaps an existing highlight'); hidePopup(); return; }
         const offsets = getRangeOffsets(root, s.range);
         const id = String(Date.now()) + Math.random().toString(36).slice(2, 7);
         const range = s.range.cloneRange(); const text = s.text;
@@ -980,26 +991,28 @@
     function wrapAll(root, term){
       const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const nodes = []; let node;
       while(node = walker.nextNode()) nodes.push(node);
+      const marks = [];
       nodes.forEach(textNode => {
         const text = textNode.nodeValue, lower = text.toLowerCase(), needle = term.toLowerCase();
         if(lower.indexOf(needle) === -1) return;
         const frag = document.createDocumentFragment(); let i = 0;
-        while(i < text.length){ const hit = lower.indexOf(needle, i); if(hit < 0){ frag.append(text.slice(i)); break; } if(hit > i) frag.append(text.slice(i, hit)); const m = document.createElement('mark'); m.className = 'search'; m.textContent = text.slice(hit, hit + term.length); frag.appendChild(m); i = hit + term.length; }
+        while(i < text.length){ const hit = lower.indexOf(needle, i); if(hit < 0){ frag.append(text.slice(i)); break; } if(hit > i) frag.append(text.slice(i, hit)); const m = document.createElement('mark'); m.className = 'search'; m.textContent = text.slice(hit, hit + term.length); frag.appendChild(m); marks.push(m); i = hit + term.length; }
         textNode.parentNode.replaceChild(frag, textNode);
       });
+      return marks;
     }
     function search(term){
       if(!term){ clearSearch(); return; }
       if(!state.searchBackup) state.searchBackup = $$('.pageinner').map(n => n.innerHTML);
       clearSearch(); state.searchBackup = $$('.pageinner').map(n => n.innerHTML); state.search.query = term;
       const matches = [];
-      $$('.pageinner').forEach((inner, pageIndex) => { const txt = inner.textContent || ''; let pos = 0; while((pos = txt.toLowerCase().indexOf(term.toLowerCase(), pos)) !== -1){ matches.push({ pageIndex }); pos += term.length; } wrapAll(inner, term); });
+      $$('.pageinner').forEach((inner, pageIndex) => { wrapAll(inner, term).forEach(() => matches.push({ pageIndex })); });
       state.search.matches = matches; state.search.index = matches.length ? 0 : -1; updateSearchCounter(); if(matches.length) goSearch(0);
     }
     function updateSearchCounter(){ el.searchCount.textContent = `${state.search.matches.length ? state.search.index + 1 : 0} of ${state.search.matches.length}`; }
     function goSearch(index){
       const marks = $$('.search'); if(!marks.length) return;
-      state.search.index = clamp(index, 0, marks.length - 1); marks.forEach((m, i) => m.style.outline = i === state.search.index ? '3px solid color-mix(in srgb, var(--accent) 55%, white 45%)' : 'none');
+      state.search.index = ((index % marks.length) + marks.length) % marks.length; marks.forEach((m, i) => m.style.outline = i === state.search.index ? '3px solid color-mix(in srgb, var(--accent) 55%, white 45%)' : 'none');
       marks[state.search.index].scrollIntoView({ behavior:'smooth', block:'center' }); updateSearchCounter();
     }
     function startSearch(){ if(!state.activeBook) return; el.searchbar.classList.add('on'); el.backdrop.classList.add('on'); el.searchInput.focus(); el.searchInput.select(); }
@@ -1169,7 +1182,13 @@ End of sample.`;
       el.jumpPage.addEventListener('keydown', e => { if(e.key === 'Enter') scrollToPage(Number(el.jumpPage.value)); });
       el.jumpPage.addEventListener('change', () => { if(el.jumpPage.value) scrollToPage(Number(el.jumpPage.value)); });
       el.searchBtn.addEventListener('click', startSearch);
-      el.searchInput.addEventListener('input', () => search(el.searchInput.value));
+      let searchDebounce = null;
+      el.searchInput.addEventListener('input', () => {
+        if(searchDebounce) clearTimeout(searchDebounce);
+        const val = el.searchInput.value;
+        if(!val){ search(''); return; }
+        searchDebounce = setTimeout(() => search(val), 180);
+      });
       el.searchInput.addEventListener('keydown', e => { if(e.key === 'Enter') goSearch(state.search.index + 1); if(e.key === 'Escape') closeSearch(); });
       el.prevMatch.addEventListener('click', () => goSearch(state.search.index - 1));
       el.nextMatch.addEventListener('click', () => goSearch(state.search.index + 1));
