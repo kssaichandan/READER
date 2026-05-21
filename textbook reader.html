@@ -426,6 +426,7 @@
       <button class="btn secondary icon-only" id="addNote" style="border-radius:50%;width:32px;height:32px" aria-label="Add note"><i class="fa-regular fa-note-sticky"></i></button>
       <button class="btn secondary icon-only" id="lookupSel" style="border-radius:50%;width:32px;height:32px" title="Dictionary" aria-label="Look up in dictionary"><i class="fa-solid fa-book"></i></button>
       <button class="btn secondary icon-only" id="copySel" style="border-radius:50%;width:32px;height:32px" aria-label="Copy selection"><i class="fa-regular fa-copy"></i></button>
+      <button class="btn secondary icon-only" id="citeSel" style="border-radius:50%;width:32px;height:32px" title="Copy as citation" aria-label="Copy selection as citation"><i class="fa-solid fa-quote-right"></i></button>
     </div>
   </div>
   <div class="popup hidden" id="noteRow" style="padding:12px;flex-direction:column;align-items:stretch;top:calc(100% + 10px);">
@@ -474,16 +475,24 @@
           </div>
           <div class="row" style="margin-top:16px;">
             <label class="btn" for="fileInput"><i class="fa-solid fa-upload" aria-hidden="true"></i> Browse Files</label>
-            <button class="btn secondary" id="demoBtn"><i class="fa-solid fa-book" aria-hidden="true"></i> Demo</button>
+            <button class="btn secondary" id="demoBtn"><i class="fa-solid fa-book" aria-hidden="true"></i> Demo Book</button>
           </div>
         </div>
-        <input id="fileInput" type="file" accept=".txt,.pdf,.epub,.html,.htm" hidden>
+        <input id="fileInput" type="file" accept=".txt,.pdf,.epub,.html,.htm" multiple hidden>
       </div>
     </div>
     <div class="library">
       <div class="row" style="justify-content:space-between;margin-bottom:16px">
         <div><h2 style="margin:0 0 4px;font-size:1.6rem;font-family:'Playfair Display'">Your Library</h2></div>
         <button class="btn secondary" id="clearLib"><i class="fa-solid fa-trash" aria-hidden="true"></i> Clear All</button>
+      </div>
+      <div class="row" id="libraryControls" style="margin-bottom:16px;gap:10px">
+        <input class="input" id="librarySearch" type="search" placeholder="Search your library..." aria-label="Search your library" style="flex:1;min-width:180px;background:var(--panel)">
+        <select class="select" id="librarySort" aria-label="Sort library">
+          <option value="recent">Recent</option>
+          <option value="title">Title A-Z</option>
+          <option value="progress">Progress</option>
+        </select>
       </div>
       <div class="grid" id="libraryGrid"></div>
     </div>
@@ -602,18 +611,20 @@
     ];
     const state = {
       library: loadJSON(STORAGE.library, []),
-      settings: loadJSON(STORAGE.settings, {theme:'paper',customBg:'#FAFAF8',customFg:'#1a1a1a',customAccent:'#C8602A',font:"'Crimson Pro', serif",fontSize:18,lineHeight:1.7,letterSpacing:0,wordSpacing:0,paragraphSpacing:18,readingWidth:680,columns:false}),
+      settings: loadJSON(STORAGE.settings, {theme:'paper',autoTheme:true,customBg:'#FAFAF8',customFg:'#1a1a1a',customAccent:'#C8602A',font:"'Crimson Pro', serif",fontSize:18,lineHeight:1.7,letterSpacing:0,wordSpacing:0,paragraphSpacing:18,readingWidth:680,columns:false}),
       stats: loadJSON(STORAGE.stats, {lastOpenDate:'',streak:0,pagesReadToday:0}),
       activeBook:null, currentPages:[], bookmarks:[], highlights:[], searchBackup:null,
       search:{query:'',matches:[],index:-1}, pendingSelection:null, dictAbort:null,
-      sessionStart:Date.now(), tts:{utterance:null,voices:[],baseHtml:null}, autoSaveTimer:null, memoryBooks:new Map(), selectionTimer:null, selectionSeq:0, scrollRaf:null
+      sessionStart:Date.now(), tts:{utterance:null,voices:[],baseHtml:null}, autoSaveTimer:null, memoryBooks:new Map(), selectionTimer:null, selectionSeq:0, scrollRaf:null,
+      libraryFilter:{query:'',sort:'recent'}
     };
     const el = { settingsBtn:$('#settingsBtn'), settingsDrawer:$('#settingsDrawer'), ttsPlayer:$('#ttsPlayer'), progressRing:$('#progressRing'), progressText:$('#progressText'), streakFlame:$('#streakFlame'),
       landingView:$('#landingView'), readerView:$('#readerView'), libraryGrid:$('#libraryGrid'),
       fileInput:$('#fileInput'), openFileBtn:$('#openFileBtn'), demoBtn:$('#demoBtn'), clearLib:$('#clearLib'),
       drop:$('#drop'), loading:$('#loading'), loadingText:$('#loadingText'), backdrop:$('#backdrop'), modback:$('#modback'),
       searchbar:$('#searchbar'), searchInput:$('#searchInput'), prevMatch:$('#prevMatch'), nextMatch:$('#nextMatch'), closeSearch:$('#closeSearch'), searchCount:$('#searchCount'),
-      popup:$('#popup'), noteRow:$('#noteRow'), noteText:$('#noteText'), addNote:$('#addNote'), lookupSel:$('#lookupSel'), saveNote:$('#saveNote'), copySel:$('#copySel'),
+      popup:$('#popup'), noteRow:$('#noteRow'), noteText:$('#noteText'), addNote:$('#addNote'), lookupSel:$('#lookupSel'), saveNote:$('#saveNote'), copySel:$('#copySel'), citeSel:$('#citeSel'),
+      librarySearch:$('#librarySearch'), librarySort:$('#librarySort'),
       dict:$('#dict'), dictWord:$('#dictWord'), dictPhonetic:$('#dictPhonetic'), dictBody:$('#dictBody'), closeDictBtn:$('#closeDictBtn'), dictSpeak:$('#dictSpeak'),
       toastwrap:$('#toastwrap'), focusExit:$('#focusExit'), readerContent:$('#readerContent'), readerEmpty:$('#readerEmpty'),
       bookTitle:$('#bookTitle'), pageInfo:$('#pageInfo'), progressBar:$('#progressBar'), toolbar:$('#toolbar'),
@@ -756,12 +767,23 @@
         stale.forEach(k => { try{ localStorage.removeItem(k); }catch{} });
       }catch{}
     }
+    function dateKeyDaysAgo(n){
+      const d = new Date(); d.setDate(d.getDate() - n);
+      const p = x => String(x).padStart(2,'0');
+      return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+    }
     function setStreak(){
       pruneDailyPagesKeys();
       const t = todayKey(), last = state.stats.lastOpenDate;
       state.stats.pagesReadToday = loadJSON(dailyPagesKey(), []).length;
-      if(last !== t){ state.stats.streak = last === yestKey() ? (state.stats.streak || 0) + 1 : 1; state.stats.lastOpenDate = t; saveJSON(STORAGE.stats, state.stats); }
-      else{ saveJSON(STORAGE.stats, state.stats); }
+      if(last !== t){
+        // 1-day grace: continue the streak if the reader was here yesterday OR the
+        // day before (one missed day is forgiven). Reset only after a longer gap.
+        const continues = last === yestKey() || last === dateKeyDaysAgo(2);
+        state.stats.streak = continues ? (state.stats.streak || 0) + 1 : 1;
+        state.stats.lastOpenDate = t;
+        saveJSON(STORAGE.stats, state.stats);
+      }else{ saveJSON(STORAGE.stats, state.stats); }
     }
     function populateFonts(){
       el.fontSelect.innerHTML = FONT_OPTIONS.map(([label,value]) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`).join('');
@@ -900,14 +922,62 @@
       // Already at the landing view with nothing open: allow the browser to leave.
     }
     function renderHelp(){ el.helpGrid.innerHTML = SHORTCUTS.map(([k,v]) => `<div class="key"><kbd>${escapeHtml(k)}</kbd><span>${escapeHtml(v)}</span></div>`).join(''); }
+    function osPrefersDark(){
+      return typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    function applyAutoTheme(){
+      // Follow the OS colour scheme. Respects an explicit user choice: this only
+      // runs while state.settings.autoTheme is true (it is turned off the moment
+      // the user picks a theme from the dropdown or a colour picker).
+      if(!state.settings.autoTheme) return;
+      const wantDark = osPrefersDark();
+      const isDark = state.settings.theme === 'night' || state.settings.theme === 'amoled' || state.settings.theme === 'ocean';
+      if(wantDark && !isDark){ applyTheme('night'); state.settings.autoTheme = true; saveJSON(STORAGE.settings, state.settings); }
+      else if(!wantDark && isDark){ applyTheme('paper'); state.settings.autoTheme = true; saveJSON(STORAGE.settings, state.settings); }
+    }
+    function bookIsOpenable(book){
+      const bk = bookKey(book);
+      return localStorage.getItem(bk) != null || sessionStorage.getItem(bk) != null || state.memoryBooks.has(bk);
+    }
+    function bookIsFullySaved(book){
+      // Fully saved means the content survives a browser restart (localStorage).
+      return localStorage.getItem(bookKey(book)) != null;
+    }
+    function getVisibleLibrary(){
+      const q = (state.libraryFilter.query || '').trim().toLowerCase();
+      const sort = state.libraryFilter.sort || 'recent';
+      let list = state.library.slice();
+      if(q) list = list.filter(b => ((b.title||'') + ' ' + (b.filename||'')).toLowerCase().includes(q));
+      if(sort === 'title') list.sort((a,b)=> (a.title||a.filename||'').localeCompare(b.title||b.filename||'', undefined, {sensitivity:'base'}));
+      else if(sort === 'progress') list.sort((a,b)=> (clamp(b.progress||0,0,100)) - (clamp(a.progress||0,0,100)));
+      else list.sort((a,b)=> (b.lastOpenAt||0)-(a.lastOpenAt||0));
+      return list;
+    }
     function renderLibrary(){
-      if(!state.library.length){ el.libraryGrid.innerHTML = `<div class="readerempty" style="grid-column:1/-1;margin:0"><svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg><h2 style="margin:16px 0 6px;font-family:'Playfair Display'">Your shelf awaits</h2><p style="margin:0;color:var(--muted)">Upload your first file to create a local shelf.</p></div>`; return; }
-      el.libraryGrid.innerHTML = state.library.slice().sort((a,b)=> (b.lastOpenAt||0)-(a.lastOpenAt||0)).map(book => {
+      const controls = $('#libraryControls');
+      if(!state.library.length){
+        if(controls) controls.classList.add('hidden');
+        el.libraryGrid.innerHTML = `<div class="readerempty" style="grid-column:1/-1;margin:0"><svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg><h2 style="margin:16px 0 6px;font-family:'Playfair Display'">Your shelf awaits</h2><p style="margin:0;color:var(--muted)">Upload your first file to create a local shelf.</p></div>`;
+        return;
+      }
+      if(controls) controls.classList.remove('hidden');
+      const list = getVisibleLibrary();
+      if(!list.length){
+        el.libraryGrid.innerHTML = `<div class="readerempty" style="grid-column:1/-1;margin:0"><i class="fa-solid fa-magnifying-glass"></i><h2 style="margin:16px 0 6px;font-family:'Playfair Display'">No matches</h2><p style="margin:0;color:var(--muted)">No books match "${escapeHtml(state.libraryFilter.query)}".</p></div>`;
+        return;
+      }
+      el.libraryGrid.innerHTML = list.map(book => {
         const c = cover(book.filename || book.title || 'book');
         const p = clamp(book.progress || 0, 0, 100).toFixed(0);
-        const bk = bookKey(book);
-        const openable = localStorage.getItem(bk) != null || sessionStorage.getItem(bk) != null || state.memoryBooks.has(bk);
-        return `<article class="librarycard"><div class="cover-spine" style="background:linear-gradient(180deg, ${c.c1}, ${c.c2})"></div><div class="card-letter">${escapeHtml((book.title || book.filename || '?').trim().charAt(0).toUpperCase())}</div><div class="body"><h3 title="${escapeHtml(book.title || book.filename || '')}">${escapeHtml(book.title || book.filename || 'Untitled')}</h3><div class="meta"><span>${escapeHtml(book.filename || '')}</span><span>Added ${escapeHtml(book.addedAtLabel || formatTime(book.addedAt || Date.now()))}</span></div><div class="bar"><span style="width:${p}%"></span></div><div class="meta">${p}% read${book.lastPage ? ` - page ${book.lastPage}` : ''}</div><div class="actions"><button class="btn" data-open-book="${escapeHtml(book.id)}">${openable ? 'Continue Reading' : 'Re-upload File'}</button><button class="btn secondary" data-remove-book="${escapeHtml(book.id)}"><i class="fa-solid fa-trash"></i></button></div></div></article>`;
+        const openable = bookIsOpenable(book);
+        const saved = bookIsFullySaved(book);
+        const badgeBase = 'display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:.72rem;font-weight:700;line-height:1.6;';
+        const badge = saved
+          ? `<span class="store-badge" style="${badgeBase}background:rgba(46,160,67,.14);color:#2ea043" title="Saved on this device — survives a browser restart"><i class="fa-solid fa-circle-check"></i> Saved</span>`
+          : (openable
+            ? `<span class="store-badge" style="${badgeBase}background:rgba(200,96,42,.14);color:var(--accent)" title="Available this session only — may be lost when you close the browser"><i class="fa-regular fa-clock"></i> Session only</span>`
+            : `<span class="store-badge" style="${badgeBase}background:rgba(180,40,40,.14);color:#b42828" title="Content was cleared from storage — re-upload the file to read it"><i class="fa-solid fa-triangle-exclamation"></i> Re-upload needed</span>`);
+        return `<article class="librarycard"><div class="cover-spine" style="background:linear-gradient(180deg, ${c.c1}, ${c.c2})"></div><div class="card-letter">${escapeHtml((book.title || book.filename || '?').trim().charAt(0).toUpperCase())}</div><div class="body"><h3 title="${escapeHtml(book.title || book.filename || '')}">${escapeHtml(book.title || book.filename || 'Untitled')}</h3><div class="meta"><span>${escapeHtml(book.filename || '')}</span><span>Added ${escapeHtml(book.addedAtLabel || formatTime(book.addedAt || Date.now()))}</span>${badge}</div><div class="bar"><span style="width:${p}%"></span></div><div class="meta">${p}% read${book.lastPage ? ` - page ${book.lastPage}` : ''}</div><div class="actions">${openable ? `<button class="btn" data-open-book="${escapeHtml(book.id)}">Continue Reading</button>` : `<button class="btn" data-reupload-book="${escapeHtml(book.id)}"><i class="fa-solid fa-upload"></i> Re-upload File</button>`}<button class="btn secondary" data-remove-book="${escapeHtml(book.id)}"><i class="fa-solid fa-trash"></i></button></div></div></article>`;
       }).join('');
     }
     function toLibraryRecord(book){
@@ -1072,8 +1142,8 @@
     }
     function saveCurrentPosition(){
       if(!state.activeBook) return;
-      // The demo/sample book is never persisted to the library.
-      if(state.activeBook.id === libraryId('sample.txt')) return;
+      // The demo book is never persisted to the library.
+      if(state.activeBook.id === libraryId('demo.txt')) return;
       const page = getCurrentPage() + 1;
       const scroll = Math.round(window.scrollY);
       const progress = clamp(scroll / Math.max(1, document.documentElement.scrollHeight - innerHeight) * 100, 0, 100);
@@ -1769,28 +1839,61 @@
         if(e.key === 'PageUp'){ e.preventDefault(); scrollToPage(getCurrentPage()); return; }
       });
     }
+    const DEMO_FILENAME = 'demo.txt';
     function openSample(){
-      const text = `Sample Chapter 1
+      const text = `Demo Chapter 1
 
 The sun reached through the blinds and found the page before the reader did.
 
-This sample lets you test themes, bookmarks, notes, highlights, search, and speech.
+This demo lets you test themes, bookmarks, notes, highlights, search, and speech.
 
-Sample Chapter 2
+Demo Chapter 2
 
-Everything stays in the browser. Nothing is uploaded anywhere.
+Your files stay in your browser — only words you look up in the dictionary are sent to a dictionary service.
 
-End of sample.`;
+End of demo.`;
       const pages = splitText(text, 120);
-      openBookData({ id: libraryId('sample.txt'), title:'Sample Text', filename:'sample.txt', type:'TXT', addedAt:Date.now(), addedAtLabel:formatTime(Date.now()), pages, fullText:text, totalWords:text.split(/\s+/).filter(Boolean).length, totalPages:pages.length, hasPersistedContent:false }, true, false);
+      openBookData({ id: libraryId(DEMO_FILENAME), title:'Demo Book', filename:DEMO_FILENAME, type:'TXT', addedAt:Date.now(), addedAtLabel:formatTime(Date.now()), pages, fullText:text, totalWords:text.split(/\s+/).filter(Boolean).length, totalPages:pages.length, hasPersistedContent:false }, true, false);
+    }
+    async function openFiles(files){
+      const list = [...(files || [])].filter(Boolean);
+      if(!list.length) return;
+      if(list.length === 1) return openFile(list[0]);
+      // Open the first file; import the rest into the library so none are silently dropped.
+      await openFile(list[0]);
+      let imported = 0;
+      for(const file of list.slice(1)){
+        try{ showLoading(`Importing ${file.name}...`); await parseFile(file); imported++; }
+        catch(err){ console.error(err); toast(`Could not import ${file.name}`); }
+      }
+      hideLoading();
+      if(imported) toast(`Added ${imported} more book${imported > 1 ? 's' : ''} to your library`);
     }
     function bindEvents(){
-      el.fileInput.addEventListener('change', e => openFile(e.target.files[0]));
+      el.fileInput.addEventListener('change', e => openFiles(e.target.files));
       el.openFileBtn.addEventListener('click', () => el.fileInput.click());
       el.drop.addEventListener('dragover', e => { e.preventDefault(); el.drop.classList.add('hover'); });
       el.drop.addEventListener('dragleave', () => el.drop.classList.remove('hover'));
-      el.drop.addEventListener('drop', e => { e.preventDefault(); el.drop.classList.remove('hover'); const file = e.dataTransfer?.files?.[0]; if(file) openFile(file); });
+      el.drop.addEventListener('drop', e => { e.preventDefault(); el.drop.classList.remove('hover'); openFiles(e.dataTransfer?.files); });
       el.demoBtn.addEventListener('click', openSample);
+      let librarySearchDebounce = null;
+      el.librarySearch.addEventListener('input', () => {
+        if(librarySearchDebounce) clearTimeout(librarySearchDebounce);
+        librarySearchDebounce = setTimeout(() => { state.libraryFilter.query = el.librarySearch.value; renderLibrary(); }, 140);
+      });
+      el.librarySort.addEventListener('change', () => { state.libraryFilter.sort = el.librarySort.value; renderLibrary(); });
+      // Auto dark mode: stop following the OS the moment the user makes an explicit
+      // theme choice, so we never override a deliberate selection.
+      const disableAutoTheme = () => { if(state.settings.autoTheme){ state.settings.autoTheme = false; saveJSON(STORAGE.settings, state.settings); } };
+      el.themeSelect.addEventListener('change', disableAutoTheme);
+      [el.bgColor, el.fgColor, el.accentColor].forEach(c => c.addEventListener('input', disableAutoTheme));
+      el.nightModeBtn.addEventListener('click', disableAutoTheme);
+      if(window.matchMedia){
+        const mq = window.matchMedia('(prefers-color-scheme: dark)');
+        const onSchemeChange = () => applyAutoTheme();
+        mq.addEventListener ? mq.addEventListener('change', onSchemeChange) : mq.addListener(onSchemeChange);
+      }
+      applyAutoTheme();
       el.clearLib.addEventListener('click', clearLibrary);
       el.toLibrary.addEventListener('click', showLanding);
       el.focusToggle.addEventListener('change', e => setMode(e.target.checked));
@@ -1829,6 +1932,14 @@ End of sample.`;
       el.lookupSel.addEventListener('click', openSelectionDictionary);
       el.saveNote.addEventListener('click', saveNote);
       el.copySel.addEventListener('click', async () => { const text = state.pendingSelection?.text || window.getSelection()?.toString().trim(); if(!text) return; try{ if(!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable'); await navigator.clipboard.writeText(text); toast('Copied selection'); }catch{ toast('Copy failed'); } });
+      el.citeSel.addEventListener('click', async () => {
+        const text = state.pendingSelection?.text || window.getSelection()?.toString().trim();
+        if(!text) return;
+        const title = state.activeBook?.title || state.activeBook?.filename || 'Untitled';
+        const page = Number(state.pendingSelection?.page?.dataset?.page) || (getCurrentPage() + 1);
+        const citation = `"${text}" — ${title}, p.${page}`;
+        try{ if(!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable'); await navigator.clipboard.writeText(citation); toast('Citation copied'); }catch{ toast('Copy failed'); }
+      });
       el.closeDictBtn.addEventListener('click', closeDict);
       el.dictSpeak.addEventListener('click', () => { const w=el.dictWord.innerText; if(w && hasSpeechSupport()) speechSynthesis.speak(new SpeechSynthesisUtterance(w)); });
 
@@ -1877,6 +1988,7 @@ End of sample.`;
       document.querySelectorAll('.closeDrawer').forEach(btn => btn.addEventListener('click', closeAllOverlays));
       document.addEventListener('click', e => {
         const open = e.target.closest('[data-open-book]'); if(open) return openLibraryFromId(open.dataset.openBook);
+        const reup = e.target.closest('[data-reupload-book]'); if(reup) return el.fileInput.click();
         const rm = e.target.closest('[data-remove-book]'); if(rm) {
           const removeId = rm.dataset.removeBook;
           const book = state.library.find(b => b.id === removeId);
