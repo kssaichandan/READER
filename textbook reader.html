@@ -405,13 +405,13 @@
   <div class="backdrop" id="backdrop"></div>
   <div class="modback" id="modback"></div>
   
-  <div class="searchbar" id="searchbar">
-    <i class="fa-solid fa-magnifying-glass" style="color:var(--muted)"></i>
-    <input class="input" id="searchInput" placeholder="Search this book..." style="flex:1">
-    <span class="searchcount" id="searchCount">0 of 0</span>
-    <button class="btn secondary icon-only" id="prevMatch" aria-label="Previous match"><i class="fa-solid fa-angle-up"></i></button>
-    <button class="btn secondary icon-only" id="nextMatch" aria-label="Next match"><i class="fa-solid fa-angle-down"></i></button>
-    <button class="btn secondary icon-only" id="closeSearch" style="border-radius:50%" aria-label="Close search"><i class="fa-solid fa-xmark"></i></button>
+  <div class="searchbar" id="searchbar" role="search">
+    <i class="fa-solid fa-magnifying-glass" style="color:var(--muted)" aria-hidden="true"></i>
+    <input class="input" id="searchInput" placeholder="Search this book..." aria-label="Search this book" style="flex:1">
+    <span class="searchcount" id="searchCount" aria-live="polite">0 of 0</span>
+    <button class="btn secondary icon-only" id="prevMatch" aria-label="Previous match"><i class="fa-solid fa-angle-up" aria-hidden="true"></i></button>
+    <button class="btn secondary icon-only" id="nextMatch" aria-label="Next match"><i class="fa-solid fa-angle-down" aria-hidden="true"></i></button>
+    <button class="btn secondary icon-only" id="closeSearch" style="border-radius:50%" aria-label="Close search"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
   </div>
   
   <div class="popup" id="popup">
@@ -429,23 +429,23 @@
     </div>
   </div>
   <div class="popup hidden" id="noteRow" style="padding:12px;flex-direction:column;align-items:stretch;top:calc(100% + 10px);">
-    <input id="noteText" placeholder="Write a note..." class="input" style="margin-bottom:8px">
+    <input id="noteText" placeholder="Write a note..." aria-label="Write a note for this highlight" class="input" style="margin-bottom:8px">
     <button class="btn" id="saveNote">Save</button>
   </div>
 
-  <div class="dict" id="dict">
+  <div class="dict" id="dict" role="dialog" aria-label="Dictionary definition">
     <div class="row" style="justify-content:space-between;margin-bottom:8px">
       <div><div id="dictWord"></div><div id="dictPhonetic"></div></div>
       <div>
-        <button class="btn secondary icon-only" id="dictSpeak" aria-label="Speak word"><i class="fa-solid fa-volume-high"></i></button>
-        <button class="btn secondary icon-only" id="closeDictBtn" aria-label="Close dictionary"><i class="fa-solid fa-xmark"></i></button>
+        <button class="btn secondary icon-only" id="dictSpeak" aria-label="Speak word"><i class="fa-solid fa-volume-high" aria-hidden="true"></i></button>
+        <button class="btn secondary icon-only" id="closeDictBtn" aria-label="Close dictionary"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
       </div>
     </div>
     <div id="dictBody"></div>
   </div>
-  
-  <div class="toastwrap" id="toastwrap"></div>
-  <button class="btn secondary focusbtn" id="focusExit"><i class="fa-solid fa-compress"></i> Esc to exit</button>
+
+  <div class="toastwrap" id="toastwrap" role="status" aria-live="polite"></div>
+  <button class="btn secondary focusbtn" id="focusExit"><i class="fa-solid fa-compress" aria-hidden="true"></i> Esc to exit</button>
 
   <section id="landingView" class="view landing">
     <div class="hero">
@@ -454,26 +454,26 @@
           <h1>Read locally,<br>beautifully.</h1>
           <p>Upload a TXT, PDF, EPUB, or HTML file and get a local-only reader with themes, notes, bookmarks, search, stats, and read-aloud.</p>
           <div class="chips">
-            <span class="chip"><i class="fa-solid fa-folder-open"></i> Single file</span>
-            <span class="chip"><i class="fa-solid fa-bookmark"></i> Local marks</span>
-            <span class="chip"><i class="fa-solid fa-highlighter"></i> Highlights</span>
-            <span class="chip"><i class="fa-solid fa-volume-high"></i> Speed reading</span>
+            <span class="chip"><i class="fa-solid fa-folder-open" aria-hidden="true"></i> Single file</span>
+            <span class="chip"><i class="fa-solid fa-bookmark" aria-hidden="true"></i> Local marks</span>
+            <span class="chip"><i class="fa-solid fa-highlighter" aria-hidden="true"></i> Highlights</span>
+            <span class="chip"><i class="fa-solid fa-volume-high" aria-hidden="true"></i> Speed reading</span>
           </div>
         </div>
-        <svg class="hero-icon" width="280" height="280" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+        <svg class="hero-icon" width="280" height="280" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
         </svg>
       </div>
       <div class="card uploadbox">
         <div class="drop" id="drop">
           <div>
-            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
             <h3 style="margin:12px 0 4px;font-family:'DM Sans', sans-serif;">Drop a book here</h3>
             <div style="color:var(--muted);font-size:.92rem">TXT, PDF, EPUB, HTML</div>
           </div>
           <div class="row" style="margin-top:16px;">
-            <label class="btn" for="fileInput"><i class="fa-solid fa-upload"></i> Browse Files</label>
-            <button class="btn secondary" id="demoBtn"><i class="fa-solid fa-book"></i> Demo</button>
+            <label class="btn" for="fileInput"><i class="fa-solid fa-upload" aria-hidden="true"></i> Browse Files</label>
+            <button class="btn secondary" id="demoBtn"><i class="fa-solid fa-book" aria-hidden="true"></i> Demo</button>
           </div>
         </div>
         <input id="fileInput" type="file" accept=".txt,.pdf,.epub,.html,.htm" hidden>
@@ -482,25 +482,27 @@
     <div class="library">
       <div class="row" style="justify-content:space-between;margin-bottom:16px">
         <div><h2 style="margin:0 0 4px;font-size:1.6rem;font-family:'Playfair Display'">Your Library</h2></div>
-        <button class="btn secondary" id="clearLib"><i class="fa-solid fa-trash"></i> Clear All</button>
+        <button class="btn secondary" id="clearLib"><i class="fa-solid fa-trash" aria-hidden="true"></i> Clear All</button>
       </div>
       <div class="grid" id="libraryGrid"></div>
     </div>
   </section>
 
   <section id="readerView" class="view reader hidden">
+    <a href="#readerContent" class="btn" id="skipLink" style="position:absolute;left:8px;top:8px;z-index:200;transform:translateY(-150%);transition:transform .15s;text-decoration:none">Skip to content</a>
     <div class="toolbar" id="toolbar">
       <div class="toolbar-left">
-        <button class="btn secondary icon-only" id="toLibrary" title="Back to Library" aria-label="Back to Library"><i class="fa-solid fa-arrow-left"></i></button>
+        <button class="btn secondary icon-only" id="toLibrary" title="Back to Library" aria-label="Back to Library"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
       </div>
       <div class="toolbar-center" id="bookTitle">No book open</div>
       <div class="toolbar-right">
         <span class="page-info" id="pageInfo">0 / 0</span>
-        <button class="btn secondary icon-only" id="searchBtn" title="Search" aria-label="Search"><i class="fa-solid fa-magnifying-glass"></i></button>
-        <button class="btn secondary icon-only" id="bookmarkBtn" title="Bookmark" aria-label="Bookmark"><i class="fa-solid fa-bookmark"></i></button>
-        <button class="btn secondary icon-only" id="highlightsBtn" title="Highlights" aria-label="Highlights"><i class="fa-solid fa-highlighter"></i></button>
-        <button class="btn secondary icon-only" id="statsBtn" title="Stats" aria-label="Reading stats"><i class="fa-solid fa-chart-column"></i></button>
-        <button class="btn secondary icon-only" id="ttsBtn" title="Read Aloud" aria-label="Read aloud"><i class="fa-solid fa-volume-high"></i></button>
+        <button class="btn secondary icon-only" id="searchBtn" title="Search" aria-label="Search" aria-haspopup="dialog" aria-expanded="false"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></button>
+        <button class="btn secondary icon-only" id="bookmarkBtn" title="Bookmark" aria-label="Bookmark" aria-haspopup="dialog" aria-expanded="false"><i class="fa-solid fa-bookmark" aria-hidden="true"></i></button>
+        <button class="btn secondary icon-only" id="highlightsBtn" title="Highlights" aria-label="Highlights" aria-haspopup="dialog" aria-expanded="false"><i class="fa-solid fa-highlighter" aria-hidden="true"></i></button>
+        <button class="btn secondary icon-only" id="statsBtn" title="Stats" aria-label="Reading stats" aria-haspopup="dialog" aria-expanded="false"><i class="fa-solid fa-chart-column" aria-hidden="true"></i></button>
+        <button class="btn secondary icon-only" id="ttsBtn" title="Read Aloud" aria-label="Read aloud"><i class="fa-solid fa-volume-high" aria-hidden="true"></i></button>
+        <button class="btn secondary icon-only" id="focusBtn" title="Focus Mode" aria-label="Toggle focus mode" aria-pressed="false"><i class="fa-solid fa-expand" aria-hidden="true"></i></button>
         <div class="exportwrap">
           <button class="btn secondary icon-only" id="exportBtn" title="Export" aria-label="Export"><i class="fa-solid fa-file-export"></i></button>
           <div class="exportmenu" id="exportMenu">
@@ -508,21 +510,22 @@
             <button id="printBtn"><i class="fa-solid fa-print"></i> Print Book</button>
           </div>
         </div>
-        <button class="btn secondary icon-only" id="settingsBtn" title="Settings" aria-label="Settings"><i class="fa-solid fa-gear"></i></button>
+        <button class="btn secondary icon-only" id="helpToolbarBtn" title="Keyboard Shortcuts" aria-label="Keyboard shortcuts" aria-haspopup="dialog" aria-expanded="false"><i class="fa-regular fa-circle-question" aria-hidden="true"></i></button>
+        <button class="btn secondary icon-only" id="settingsBtn" title="Settings" aria-label="Settings" aria-haspopup="dialog" aria-expanded="false"><i class="fa-solid fa-gear" aria-hidden="true"></i></button>
       </div>
     </div>
-    
-    <div class="readercontent" id="readerContent"></div>
+
+    <main class="readercontent" id="readerContent" tabindex="-1"></main>
     <div class="readerempty hidden" id="readerEmpty">
-      <i class="fa-solid fa-book-open"></i>
+      <i class="fa-solid fa-book-open" aria-hidden="true"></i>
       <h2 style="margin:16px 0 6px;font-family:'Playfair Display'">Open a book to begin</h2>
       <p style="margin:0;color:var(--muted)">Go back to the library and upload a file.</p>
-      <button class="btn" id="openFileBtn" style="margin-top:18px"><i class="fa-solid fa-upload"></i> Choose a file</button>
+      <button class="btn" id="openFileBtn" style="margin-top:18px"><i class="fa-solid fa-upload" aria-hidden="true"></i> Choose a file</button>
     </div>
   </section>
 
   <!-- Drawers -->
-  <aside class="drawer" id="settingsDrawer"><header><h3><i class="fa-solid fa-gear"></i> Settings</h3><button class="btn secondary icon-only closeDrawer" aria-label="Close settings"><i class="fa-solid fa-xmark"></i></button></header><div class="drawercontent"><div class="drawercontent-inner">
+  <aside class="drawer" id="settingsDrawer" role="dialog" aria-modal="true" aria-labelledby="settingsDrawerTitle"><header><h3 id="settingsDrawerTitle"><i class="fa-solid fa-gear" aria-hidden="true"></i> Settings</h3><button class="btn secondary icon-only closeDrawer" aria-label="Close settings"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header><div class="drawercontent"><div class="drawercontent-inner">
       <div class="row"><span class="small" style="font-weight:600;text-transform:uppercase;color:var(--muted);width:80px">Theme</span><select class="select" id="themeSelect" style="flex:1"><option value="paper">Paper White</option><option value="sepia">Sepia</option><option value="night">Night Dark</option><option value="amoled">AMOLED Black</option><option value="ocean">Ocean Blue</option><option value="custom">Custom</option></select></div>
       <div class="row" style="padding-left:90px"><input class="color" id="bgColor" type="color" title="Background" style="flex:1"><input class="color" id="fgColor" type="color" title="Text" style="flex:1"><input class="color" id="accentColor" type="color" title="Accent" style="flex:1"></div>
       <div class="row"><span class="small" style="font-weight:600;text-transform:uppercase;color:var(--muted);width:80px">Font</span><select class="select" id="fontSelect" style="flex:1"></select></div>
@@ -534,18 +537,18 @@
       <div class="slider-group"><label>Paragraph Spacing <span id="paraSpacingVal" class="val">18px</span></label><input class="range" id="paraSpacing" type="range" min="0" max="40" step="1" value="18"></div>
       <div class="slider-group"><label>Reading Width <span id="readingWidthVal" class="val">680px</span></label><input class="range" id="readingWidth" type="range" min="400" max="1200" step="10" value="680"></div>
       <hr style="border:0;border-top:1px solid var(--border);margin:10px 0">
-      <div class="row" style="justify-content:space-between"><label style="font-weight:600;text-transform:uppercase;color:var(--muted);font-size:.85rem">Two Columns</label><label class="toggle"><input type="checkbox" id="columnsToggle"></label></div>
-      <div class="row" style="justify-content:space-between"><label style="font-weight:600;text-transform:uppercase;color:var(--muted);font-size:.85rem">Focus Mode</label><label class="toggle"><input type="checkbox" id="focusToggle"></label></div>
-      <div class="row" style="justify-content:space-between;align-items:center"><label style="font-weight:600;text-transform:uppercase;color:var(--muted);font-size:.85rem">Jump to Page</label><input class="input jump" id="jumpPage" type="number" min="1" placeholder="#" style="width:80px"></div>
-      <div class="row" style="margin-top:10px"><button class="btn secondary" id="nightModeBtn" style="flex:1"><i class="fa-solid fa-moon"></i> Toggle Night</button><button class="btn secondary" id="helpBtn" style="flex:1"><i class="fa-regular fa-circle-question"></i> Shortcuts</button></div>
+      <div class="row" style="justify-content:space-between"><label for="columnsToggle" style="font-weight:600;text-transform:uppercase;color:var(--muted);font-size:.85rem">Two Columns</label><label class="toggle"><input type="checkbox" id="columnsToggle" aria-label="Two columns"></label></div>
+      <div class="row" style="justify-content:space-between"><label for="focusToggle" style="font-weight:600;text-transform:uppercase;color:var(--muted);font-size:.85rem">Focus Mode</label><label class="toggle"><input type="checkbox" id="focusToggle" aria-label="Focus mode"></label></div>
+      <div class="row" style="justify-content:space-between;align-items:center"><label for="jumpPage" style="font-weight:600;text-transform:uppercase;color:var(--muted);font-size:.85rem">Jump to Page</label><input class="input jump" id="jumpPage" type="number" min="1" placeholder="#" aria-label="Jump to page number" style="width:80px"></div>
+      <div class="row" style="margin-top:10px"><button class="btn secondary" id="nightModeBtn" style="flex:1"><i class="fa-solid fa-moon" aria-hidden="true"></i> Toggle Night</button><button class="btn secondary" id="helpBtn" style="flex:1"><i class="fa-regular fa-circle-question" aria-hidden="true"></i> Shortcuts</button></div>
   </div></div></aside>
 
-  <aside class="drawer" id="bookmarksDrawer"><header><h3><i class="fa-solid fa-bookmark"></i> Bookmarks</h3><button class="btn secondary icon-only closeDrawer" aria-label="Close bookmarks"><i class="fa-solid fa-xmark"></i></button></header><div class="drawercontent" id="bookmarksList"></div></aside>
-  <aside class="drawer" id="highlightsDrawer"><header><h3><i class="fa-solid fa-highlighter"></i> Highlights</h3><button class="btn secondary icon-only closeDrawer" aria-label="Close highlights"><i class="fa-solid fa-xmark"></i></button></header><div class="drawercontent" id="highlightsList"></div></aside>
-  <aside class="drawer" id="statsDrawer"><header><h3><i class="fa-solid fa-chart-column"></i> Reading Stats</h3><button class="btn secondary icon-only closeDrawer" aria-label="Close stats"><i class="fa-solid fa-xmark"></i></button></header><div class="drawercontent"><div class="drawercontent-inner">
+  <aside class="drawer" id="bookmarksDrawer" role="dialog" aria-modal="true" aria-labelledby="bookmarksDrawerTitle"><header><h3 id="bookmarksDrawerTitle"><i class="fa-solid fa-bookmark" aria-hidden="true"></i> Bookmarks</h3><button class="btn secondary icon-only closeDrawer" aria-label="Close bookmarks"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header><div class="drawercontent" id="bookmarksList"></div></aside>
+  <aside class="drawer" id="highlightsDrawer" role="dialog" aria-modal="true" aria-labelledby="highlightsDrawerTitle"><header><h3 id="highlightsDrawerTitle"><i class="fa-solid fa-highlighter" aria-hidden="true"></i> Highlights</h3><button class="btn secondary icon-only closeDrawer" aria-label="Close highlights"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header><div class="drawercontent" id="highlightsList"></div></aside>
+  <aside class="drawer" id="statsDrawer" role="dialog" aria-modal="true" aria-labelledby="statsDrawerTitle"><header><h3 id="statsDrawerTitle"><i class="fa-solid fa-chart-column" aria-hidden="true"></i> Reading Stats</h3><button class="btn secondary icon-only closeDrawer" aria-label="Close stats"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header><div class="drawercontent"><div class="drawercontent-inner">
         <div class="reading-ring-container">
             <div class="reading-ring">
-                <svg><circle cx="60" cy="60" r="50"></circle><circle class="progress" cx="60" cy="60" r="50" id="progressRing"></circle></svg>
+                <svg aria-hidden="true"><circle cx="60" cy="60" r="50"></circle><circle class="progress" cx="60" cy="60" r="50" id="progressRing"></circle></svg>
                 <div class="center" id="progressText">0%</div>
             </div>
         </div>
@@ -553,13 +556,13 @@
         <div style="color:var(--muted);font-size:.92rem;line-height:1.5;text-align:center">🔥 Streak: <span id="streakFlame">0</span> days</div>
   </div></div></aside>
   
-  <div class="modal" id="helpModal"><header><h3><i class="fa-regular fa-circle-question"></i> Keyboard Shortcuts</h3><button class="btn secondary icon-only" id="helpClose" aria-label="Close shortcuts"><i class="fa-solid fa-xmark"></i></button></header><div class="modalcontent" style="padding:20px"><div class="helpgrid" id="helpGrid"></div></div></div>
+  <div class="modal" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpModalTitle"><header><h3 id="helpModalTitle"><i class="fa-regular fa-circle-question" aria-hidden="true"></i> Keyboard Shortcuts</h3><button class="btn secondary icon-only" id="helpClose" aria-label="Close shortcuts"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header><div class="modalcontent" style="padding:20px"><div class="helpgrid" id="helpGrid"></div></div></div>
 
   <div class="tts-player" id="ttsPlayer">
-    <button class="btn icon-only" id="ttsPlay" aria-label="Play or pause read aloud"><i class="fa-solid fa-play"></i></button>
-    <button class="btn secondary icon-only" id="ttsStop" aria-label="Stop read aloud"><i class="fa-solid fa-stop"></i></button>
-    <select class="select" id="voiceSelect" style="max-width:180px"></select>
-    <input class="range" id="ttsRate" type="range" min="0.5" max="2" step="0.1" value="1" style="width:100px">
+    <button class="btn icon-only" id="ttsPlay" aria-label="Play or pause read aloud"><i class="fa-solid fa-play" aria-hidden="true"></i></button>
+    <button class="btn secondary icon-only" id="ttsStop" aria-label="Stop read aloud"><i class="fa-solid fa-stop" aria-hidden="true"></i></button>
+    <select class="select" id="voiceSelect" aria-label="Speech voice" style="max-width:180px"></select>
+    <input class="range" id="ttsRate" type="range" min="0.5" max="2" step="0.1" value="1" aria-label="Reading speed" style="width:100px">
   </div>
 
   <script>
@@ -588,7 +591,7 @@
     const SHORTCUTS = [
       ['Ctrl + F','Open search'],['Ctrl + B','Add bookmark'],['Ctrl + D','Toggle dark/light mode'],
       ['Ctrl + +','Increase font size'],['Ctrl + -','Decrease font size'],
-      ['F11 / Ctrl + Shift + F','Fullscreen'],['ArrowUp / ArrowDown','Scroll by one line'],
+      ['F11 / Ctrl + Shift + F','Fullscreen'],['Z','Toggle focus mode'],['ArrowUp / ArrowDown','Scroll by one line'],
       ['PageUp / PageDown','Jump page blocks'],['Escape','Close panel'],['?','Show shortcuts']
     ];
     const state = {
@@ -610,6 +613,7 @@
       bookTitle:$('#bookTitle'), pageInfo:$('#pageInfo'), progressBar:$('#progressBar'), toolbar:$('#toolbar'),
       toLibrary:$('#toLibrary'), bookmarkBtn:$('#bookmarkBtn'), highlightsBtn:$('#highlightsBtn'), statsBtn:$('#statsBtn'), searchBtn:$('#searchBtn'),
       ttsBtn:$('#ttsBtn'), exportBtn:$('#exportBtn'), exportMenu:$('#exportMenu'), exportNotesBtn:$('#exportNotesBtn'), printBtn:$('#printBtn'), helpBtn:$('#helpBtn'), helpClose:$('#helpClose'), focusToggle:$('#focusToggle'),
+      focusBtn:$('#focusBtn'), helpToolbarBtn:$('#helpToolbarBtn'), skipLink:$('#skipLink'),
       nightModeBtn:$('#nightModeBtn'),
       themeSelect:$('#themeSelect'), bgColor:$('#bgColor'), fgColor:$('#fgColor'), accentColor:$('#accentColor'), fontSelect:$('#fontSelect'),
       jumpPage:$('#jumpPage'), columnsToggle:$('#columnsToggle'),
@@ -727,19 +731,87 @@
       el.voiceSelect.innerHTML = voices.map((v,i)=>`<option value="${i}">${escapeHtml(v.name)}${v.lang ? ` (${v.lang})` : ''}</option>`).join('');
       if(selected) el.voiceSelect.value = selected;
     }
-    function setMode(on){ document.body.classList.toggle('focus', on); el.focusToggle.checked = on; }
+    function setMode(on){
+      document.body.classList.toggle('focus', on);
+      el.focusToggle.checked = on;
+      if(el.focusBtn){ el.focusBtn.setAttribute('aria-pressed', String(!!on)); el.focusBtn.title = on ? 'Exit Focus Mode' : 'Focus Mode'; }
+      if(on){ el.focusExit.style.opacity = '1'; el.focusExit.style.pointerEvents = 'auto'; }
+    }
+    function toggleFocusMode(){ setMode(!document.body.classList.contains('focus')); }
+
+    // ---- Focus trap + accessible overlay management ----------------------
+    const OVERLAY_MAP = () => ({ bookmarks:el.bookmarksDrawer, highlights:el.highlightsDrawer, stats:el.statsDrawer, help:el.helpModal, settings:el.settingsDrawer });
+    // Toolbar buttons whose aria-expanded must mirror their overlay's open state.
+    const OVERLAY_TRIGGERS = () => ({ bookmarks:el.bookmarkBtn, highlights:el.highlightsBtn, stats:el.statsBtn, help:el.helpToolbarBtn, settings:el.settingsBtn });
+    const focusTrap = { panel:null, returnTo:null, handler:null };
+    function focusableWithin(panel){
+      return [...panel.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')]
+        .filter(n => !n.disabled && n.offsetParent !== null && n.getAttribute('aria-hidden') !== 'true');
+    }
+    function setBackgroundInert(on){
+      // Mark the primary page regions inert so screen readers / Tab skip them while a dialog is open.
+      [el.landingView, el.readerView].forEach(node => {
+        if(!node) return;
+        if(on) node.setAttribute('inert', '');
+        else node.removeAttribute('inert');
+      });
+    }
+    function trapFocus(panel){
+      releaseFocusTrap();
+      focusTrap.panel = panel;
+      focusTrap.returnTo = document.activeElement;
+      setBackgroundInert(true);
+      // Move focus to the first focusable control, falling back to the heading.
+      const heading = panel.querySelector('h3');
+      const target = focusableWithin(panel)[0] || heading || panel;
+      if(target){
+        if(target === heading && !heading.hasAttribute('tabindex')) heading.setAttribute('tabindex', '-1');
+        try{ target.focus(); }catch{}
+      }
+      focusTrap.handler = e => {
+        if(e.key !== 'Tab') return;
+        const items = focusableWithin(panel);
+        if(!items.length){ e.preventDefault(); return; }
+        const firstEl = items[0], lastEl = items[items.length - 1];
+        if(e.shiftKey && document.activeElement === firstEl){ e.preventDefault(); lastEl.focus(); }
+        else if(!e.shiftKey && document.activeElement === lastEl){ e.preventDefault(); firstEl.focus(); }
+        else if(!panel.contains(document.activeElement)){ e.preventDefault(); firstEl.focus(); }
+      };
+      document.addEventListener('keydown', focusTrap.handler, true);
+    }
+    function releaseFocusTrap(){
+      if(focusTrap.handler) document.removeEventListener('keydown', focusTrap.handler, true);
+      setBackgroundInert(false);
+      const back = focusTrap.returnTo;
+      focusTrap.panel = null; focusTrap.handler = null; focusTrap.returnTo = null;
+      if(back && typeof back.focus === 'function' && document.contains(back)){ try{ back.focus(); }catch{} }
+    }
+    function syncOverlayTriggers(){
+      const triggers = OVERLAY_TRIGGERS(), map = OVERLAY_MAP();
+      Object.keys(triggers).forEach(kind => {
+        const btn = triggers[kind], panel = map[kind];
+        if(btn && panel) btn.setAttribute('aria-expanded', String(panel.classList.contains('on')));
+      });
+    }
     function openOverlay(kind){
       closeSearch();
       hidePopup();
       closeDict();
       el.exportMenu.classList.remove('on');
-      const map = { bookmarks:el.bookmarksDrawer, highlights:el.highlightsDrawer, stats:el.statsDrawer, help:el.helpModal, settings:el.settingsDrawer };
+      const map = OVERLAY_MAP();
       Object.values(map).forEach(n => n.classList.remove('on'));
       el.backdrop.classList.remove('on'); el.modback.classList.remove('on');
-      if(kind === 'help'){ el.helpModal.classList.add('on'); el.modback.classList.add('on'); return; }
-      if(kind && map[kind]){ map[kind].classList.add('on'); el.backdrop.classList.add('on'); }
+      if(kind && map[kind]){
+        map[kind].classList.add('on');
+        (kind === 'help' ? el.modback : el.backdrop).classList.add('on');
+        pushHistoryState();
+        trapFocus(map[kind]);
+      }
+      syncOverlayTriggers();
     }
+    function anyOverlayOpen(){ return Object.values(OVERLAY_MAP()).some(n => n.classList.contains('on')); }
     function closeAllOverlays(){
+      const hadOverlay = anyOverlayOpen();
       closeSearch();
       hidePopup();
       closeDict();
@@ -747,6 +819,33 @@
       [el.bookmarksDrawer,el.highlightsDrawer,el.statsDrawer,el.settingsDrawer,el.helpModal].forEach(n => n.classList.remove('on'));
       [el.backdrop,el.modback].forEach(n => n.classList.remove('on'));
       el.noteRow.classList.add('hidden');
+      syncOverlayTriggers();
+      if(hadOverlay) releaseFocusTrap();
+    }
+
+    // ---- History API: make the browser Back button behave intuitively ----
+    function pushHistoryState(){
+      // Add a stack entry so the next Back press is caught by our popstate handler
+      // instead of leaving the site.
+      try{ history.pushState({ reader:true, ts:Date.now() }, ''); }catch{}
+    }
+    function handlePopState(){
+      // Priority: close topmost overlay -> exit focus mode -> return to library.
+      if(anyOverlayOpen() || el.searchbar.classList.contains('on') || el.dict.classList.contains('on') || el.popup.classList.contains('on')){
+        closeAllOverlays();
+        pushHistoryState();
+        return;
+      }
+      if(document.body.classList.contains('focus')){
+        setMode(false);
+        pushHistoryState();
+        return;
+      }
+      if(!el.readerView.classList.contains('hidden')){
+        showLanding();
+        return;
+      }
+      // Already at the landing view with nothing open: allow the browser to leave.
     }
     function renderHelp(){ el.helpGrid.innerHTML = SHORTCUTS.map(([k,v]) => `<div class="key"><kbd>${escapeHtml(k)}</kbd><span>${escapeHtml(v)}</span></div>`).join(''); }
     function renderLibrary(){
@@ -1392,10 +1491,27 @@
       toast(keepRecord ? 'Library cleared. Current book kept.' : 'Library cleared');
     }
     function initShortcuts(){
+      // Browser/Android Back button: handled by handlePopState in priority order.
+      window.addEventListener('popstate', handlePopState);
+      // Seed one history entry so the first Back press inside the app is captured.
+      pushHistoryState();
+      // When the reader view opens, add a history entry so Back returns to the library.
+      let readerWasHidden = el.readerView.classList.contains('hidden');
+      new MutationObserver(() => {
+        const hidden = el.readerView.classList.contains('hidden');
+        if(readerWasHidden && !hidden) pushHistoryState();
+        readerWasHidden = hidden;
+      }).observe(el.readerView, { attributes:true, attributeFilter:['class'] });
+      // Reveal the skip link only while it has keyboard focus.
+      if(el.skipLink){
+        el.skipLink.addEventListener('focus', () => { el.skipLink.style.transform = 'translateY(0)'; });
+        el.skipLink.addEventListener('blur', () => { el.skipLink.style.transform = 'translateY(-150%)'; });
+      }
       document.addEventListener('keydown', e => {
         const ctrl = e.ctrlKey || e.metaKey;
         const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName) || document.activeElement?.isContentEditable;
         if(e.key === '?' && !typing){ e.preventDefault(); renderHelp(); openOverlay('help'); return; }
+        if((e.key === 'z' || e.key === 'Z') && !ctrl && !e.altKey && !typing){ e.preventDefault(); toggleFocusMode(); return; }
         if(e.key === 'Escape'){ e.preventDefault(); if(document.body.classList.contains('focus')) return setMode(false); closeAllOverlays(); return; }
         if(ctrl && e.key.toLowerCase() === 'f'){ e.preventDefault(); if(e.shiftKey) return toggleFullscreen(); startSearch(); return; }
         if(ctrl && e.key.toLowerCase() === 'b'){ e.preventDefault(); addBookmark(); return; }
@@ -1489,6 +1605,8 @@ End of sample.`;
       el.highlightsBtn.addEventListener('click', () => { renderHighlightsList(); openOverlay('highlights'); });
       el.statsBtn.addEventListener('click', () => { renderStats(); openOverlay('stats'); });
       el.helpBtn.addEventListener('click', () => { renderHelp(); openOverlay('help'); });
+      el.helpToolbarBtn?.addEventListener('click', () => { renderHelp(); openOverlay('help'); });
+      el.focusBtn?.addEventListener('click', toggleFocusMode);
       el.helpClose.addEventListener('click', closeAllOverlays);
       el.ttsBtn.addEventListener('click', () => { el.ttsPlayer.classList.add('on'); if(!state.tts.utterance) startTTS(); });
       el.ttsPlay.addEventListener('click', () => {
@@ -1536,13 +1654,18 @@ End of sample.`;
         }
         if(!e.target.closest('.exportwrap')) el.exportMenu.classList.remove('on');
         if(!e.target.closest('.drawer') && !e.target.closest('.modal') && !e.target.closest('.popup') && !e.target.closest('.dict') && !e.target.closest('.searchbar')) { if(!e.target.closest('#toolbar')) hidePopup(); }
+        // Dismiss the dictionary popup on any click outside it (mirrors selection-popup behavior).
+        if(el.dict.classList.contains('on') && !e.target.closest('.dict') && !e.target.closest('#toolbar')) closeDict();
       });
       el.backdrop.addEventListener('click', closeAllOverlays);
       el.modback.addEventListener('click', closeAllOverlays);
       document.addEventListener('selectionchange', onSelectionChange);
       window.addEventListener('scroll', onScroll, { passive:true });
       window.addEventListener('beforeunload', () => { saveCurrentPosition(); });
-      window.addEventListener('mousemove', () => { if(document.body.classList.contains('focus')) { el.focusExit.style.opacity = '1'; clearTimeout(el.focusExit._t); el.focusExit._t = setTimeout(() => { if(document.body.classList.contains('focus')) el.focusExit.style.opacity = '0'; }, 1400); } });
+      window.addEventListener('mousemove', () => { if(document.body.classList.contains('focus')) { el.focusExit.style.opacity = '1'; clearTimeout(el.focusExit._t); el.focusExit._t = setTimeout(() => { if(document.body.classList.contains('focus') && document.activeElement !== el.focusExit) el.focusExit.style.opacity = '0'; }, 1400); } });
+      // Keep the exit button visible whenever a keyboard user focuses it.
+      el.focusExit.addEventListener('focus', () => { if(document.body.classList.contains('focus')) el.focusExit.style.opacity = '1'; });
+      initShortcuts();
       if(hasSpeechSupport()){
         populateVoices();
         speechSynthesis.onvoiceschanged = populateVoices;
