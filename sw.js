@@ -1,17 +1,14 @@
 /* Service Worker for Local Book Reader — offline support + PWA.
    Bump CACHE_VERSION on every deploy that changes cached assets so old
    caches are cleaned up on activate. */
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const SHELL_CACHE = 'reader-shell-' + CACHE_VERSION;
 const RUNTIME_CACHE = 'reader-runtime-' + CACHE_VERSION;
 
-/* App shell — same-origin files needed to boot offline.
-   Note the space in the filename: encode it so the cached URL matches
-   what the browser requests for ./textbook%20reader.html */
+/* App shell — same-origin files needed to boot offline. */
 const SHELL_ASSETS = [
   './',
   'index.html',
-  'textbook%20reader.html',
   'manifest.json',
   'icon.svg'
 ];
@@ -96,8 +93,7 @@ self.addEventListener('fetch', event => {
         }).catch(() => {
           // Navigation fallback: serve the app shell when offline.
           if(request.mode === 'navigate'){
-            return caches.match('textbook%20reader.html')
-              .then(shell => shell || caches.match('index.html'));
+            return caches.match('index.html');
           }
         });
       })

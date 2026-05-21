@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Local Book Reader</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; connect-src 'self' https://api.dictionaryapi.dev https://cdnjs.cloudflare.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-src 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
 
   <!-- SEO / Social metadata -->
   <meta name="description" content="A free, private, browser-based ebook reader for TXT, PDF, EPUB and HTML. Themes, highlights, notes, search and read-aloud — your files never leave your browser.">
@@ -26,16 +28,2225 @@
   <meta name="twitter:description" content="A free, private, browser-based ebook reader for TXT, PDF, EPUB and HTML. Themes, highlights, notes, search and read-aloud — your files never leave your browser.">
   <meta name="twitter:image" content="https://reader-dljp.onrender.com/og-image.png">
 
+  <!-- Structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Local Book Reader",
+    "url": "https://reader-dljp.onrender.com/",
+    "description": "A free, private, browser-based ebook reader for TXT, PDF, EPUB and HTML. Themes, highlights, notes, search and read-aloud — your files never leave your browser.",
+    "applicationCategory": "BookApplication",
+    "operatingSystem": "Any (web browser)",
+    "browserRequirements": "Requires a modern web browser with JavaScript enabled",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "featureList": [
+      "Read TXT, PDF, EPUB and HTML files",
+      "Reading themes and customisation",
+      "Highlights and notes",
+      "Full-text search",
+      "Read-aloud (text-to-speech)",
+      "Files stay private in your browser"
+    ]
+  }
+  </script>
+
   <!-- Favicon (inline SVG data URI — a book glyph in the accent colour) -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Crect%20width='32'%20height='32'%20rx='6'%20fill='%23FAFAF7'/%3E%3Cpath%20d='M7%207h8a3%203%200%200%201%203%203v15a3%203%200%200%200-3-3H7z'%20fill='%23C8602A'/%3E%3Cpath%20d='M25%207h-8a3%203%200%200%200-3%203v15a3%203%200%200%201%203-3h8z'%20fill='%23E8936A'/%3E%3C/svg%3E">
   <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Crect%20width='32'%20height='32'%20rx='6'%20fill='%23FAFAF7'/%3E%3Cpath%20d='M7%207h8a3%203%200%200%201%203%203v15a3%203%200%200%200-3-3H7z'%20fill='%23C8602A'/%3E%3Cpath%20d='M25%207h-8a3%203%200%200%200-3%203v15a3%203%200%200%201%203-3h8z'%20fill='%23E8936A'/%3E%3C/svg%3E">
 
-  <meta http-equiv="refresh" content="0; url=./textbook%20reader.html">
-  <script>
-    window.location.replace('./textbook%20reader.html');
-  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Nunito:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" integrity="sha384-QI8z31KmtR+tk1MYi0DfgxrjYgpTpLLol3bqZA/Q1Y8BvH+6k7/Huoj38gQOaCS7" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" integrity="sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/epubjs@0.3.93/dist/epub.min.js" integrity="sha384-ZqmkDa/1AGF4SKdSmXgEG+3G+Gsb6yNqUSq2Mqp0jDf1GWk+UY5eNbEd7hgwiywI" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <style>
+
+
+    :root {
+      --bg: #FAFAF7;
+      --fg: #1C1C1E;
+      --page-bg: #FEFCF8;
+      --page-fg: #1C1C1E;
+      --page-accent: #4f7cff;
+      --muted: #6B6B6B;
+      --panel: rgba(255,255,255,0.82);
+      --accent: #C8602A;
+      --accent2: #E8936A;
+      --border: rgba(0,0,0,0.07);
+      --shadow: 0 4px 24px rgba(0,0,0,0.08);
+      --radius: 18px;
+      /* Theme-aware surface fills — fallback first, then color-mix for modern browsers */
+      --surface: rgba(255,255,255,.55);
+      --surface: color-mix(in srgb, var(--panel) 80%, transparent);
+      --surface-strong: rgba(255,255,255,.7);
+      --surface-strong: color-mix(in srgb, var(--panel) 94%, transparent);
+      --font-size: 18px;
+      --line-height: 1.7;
+      --letter-spacing: 0px;
+      --word-spacing: 0px;
+      --paragraph-spacing: 18px;
+      --reading-width: 680px;
+      --reader-font: 'Crimson Pro', serif;
+      --texture-opacity: .07;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { 
+        margin: 0; background: var(--bg); color: var(--fg); 
+        font-family: 'DM Sans', sans-serif; transition: background .3s, color .3s; overflow-x: hidden; 
+    }
+    
+    /* Vignette and texture */
+    body::before, body::after { content: ""; position: fixed; inset: 0; pointer-events: none; }
+    body::before { background: radial-gradient(circle at 50% 20%, rgba(255,255,255,.22), transparent 40%), radial-gradient(circle at 50% 85%, rgba(0,0,0,.06), transparent 55%); z-index: -2; }
+    body::after { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cg fill='%23000' fill-opacity='.08'%3E%3Ccircle cx='10' cy='20' r='.7'/%3E%3Ccircle cx='34' cy='46' r='.6'/%3E%3Ccircle cx='58' cy='18' r='.8'/%3E%3Ccircle cx='86' cy='62' r='.7'/%3E%3C/g%3E%3C/svg%3E"); background-size: 220px 220px; opacity: var(--texture-opacity); z-index: -1; }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: var(--accent2); border-radius: 999px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+
+    .topbar { position: fixed; inset: 0 0 auto 0; height: 4px; background: rgba(255,255,255,.1); z-index: 80; }
+    #progressBar { height: 100%; width: 0; background: var(--accent); transition: width .12s linear; }
+    .view { min-height: calc(100vh - 4px); min-height: calc(100dvh - 4px); padding: 24px 14px 60px; }
+    .hidden { display: none !important; }
+
+    /* Subtle fade/slide when switching between landing and reader views */
+    #landingView:not(.hidden), #readerView:not(.hidden) { animation: viewIn .42s cubic-bezier(0.33, 1, 0.68, 1) both; }
+    @keyframes viewIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
+    .card, .drawer, .modal, .popup, .searchbar, .toast, .dict {
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); background: var(--panel); border: 1px solid var(--border); box-shadow: var(--shadow);
+    }
+
+    .landing { max-width: 1200px; margin: 0 auto; }
+    
+    .hero { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 18px; margin-bottom: 20px; }
+    .hero-card { 
+        background: linear-gradient(135deg, #FDF6F0 0%, #F5EBE0 50%, #EDD9C5 100%);
+        border-radius: var(--radius); padding: 40px; position:relative; overflow:hidden;
+    }
+    .hero-card h1 { margin: 0 0 16px; font-family: 'Playfair Display', serif; font-size: clamp(2.5rem, 5vw, 3.5rem); font-style: italic; line-height: 1.1; color: #1c1c1e; }
+    .hero-card p { margin: 0; color: #6b6b6b; line-height: 1.65; max-width:480px;}
+    /* The hero card always uses its light peachy gradient, so pin its contents to dark
+       tones for guaranteed contrast in every theme (incl. dark themes / auto dark mode). */
+    .hero-card .chip { background: rgba(255,255,255,.62); color: #2a2118; border-color: rgba(0,0,0,.07); }
+    .hero-card .chip i { color: var(--accent); }
+
+    .hero-icon { position:absolute; right:-30px; bottom:-30px; opacity:0.4;}
+
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+    .chip { padding: 8px 16px; border-radius: 999px; background: rgba(255,255,255,.5); background: var(--surface); border: 1px solid var(--border); font-weight: 700; font-size: .9rem; }
+
+    .uploadbox { display: flex; flex-direction: column; gap: 12px; justify-content: space-between; border-radius:var(--radius); padding:20px; }
+    .drop { min-height: 200px; border: 2px dashed var(--border); border-radius: var(--radius); display: grid; place-items: center; text-align: center; padding: 18px; transition: .2s; }
+    .drop:hover, .drop.hover { border-color: var(--accent); transform: translateY(-2px); border-style:dashed;}
+    .drop i { font-size: 2.2rem; color: var(--accent); transition:transform 0.2s;}
+    .drop:hover i { transform:translateY(-5px); }
+
+    .btn, .select, .input, .range, .color { font-family: inherit; border-radius: 12px; border: 1px solid var(--border); min-height: 42px; padding:0 14px;}
+    .btn { background: var(--accent); color: #fff; padding: 10px 16px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition:0.15s; border-color:transparent; touch-action: manipulation;}
+    .btn:hover { filter:brightness(1.1); transform:translateY(-1px);}
+    .btn.secondary { background: var(--panel); color: var(--fg); border-color:var(--border);}
+
+    /* Quieter ghost/text button for "Clear All" so it doesn't shout */
+    #clearLib { background: transparent; border-color: transparent; color: var(--muted); box-shadow: none; font-weight: 600; padding: 8px 12px; }
+    #clearLib:hover { background: var(--surface); color: var(--accent); filter: none; transform: none; }
+    .btn.icon-only { width:42px; padding:0; justify-content:center;}
+
+    /* Theme native form controls to the warm accent (was browser blue) */
+    .range, input[type=checkbox], input[type=color], input[type=number] { accent-color: var(--accent); }
+
+    /* Custom-themed range slider — track + thumb in both engines */
+    .range { -webkit-appearance: none; appearance: none; min-height: auto; height: 32px; padding: 0; border: 0; background: transparent; cursor: pointer; }
+    .range::-webkit-slider-runnable-track { height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 22%, var(--border)); }
+    .range::-moz-range-track { height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 22%, var(--border)); }
+    .range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; margin-top: -6px; border-radius: 50%; background: var(--accent); border: 2px solid var(--page-bg); box-shadow: 0 1px 4px rgba(0,0,0,.25); transition: transform .12s; }
+    .range::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); border: 2px solid var(--page-bg); box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+    .range:hover::-webkit-slider-thumb { transform: scale(1.15); }
+    .range:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 999px; }
+    @supports not (background: color-mix(in srgb, red, blue)) {
+      .range::-webkit-slider-runnable-track, .range::-moz-range-track { background: var(--border); }
+    }
+
+    .toggle { position: relative; width: 44px; height: 24px; display: inline-block; padding: 0; min-height: auto; border:none; cursor: pointer; margin-top: 8px; }
+    .toggle input { opacity: 0; width: 0; height: 0; position:absolute; }
+    .toggle::before { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,0.15); border-radius: 999px; transition: 0.2s; }
+    .toggle::after { content: ""; position: absolute; left: 2px; top: 2px; width: 20px; height: 20px; background: #fff; border-radius: 50%; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.15); }
+    .toggle:has(input:checked)::before { background: var(--accent); }
+    .toggle:has(input:checked)::after { transform: translateX(20px); }
+
+
+    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    
+    .library { margin-top: 40px; }
+    .librarycard { border-radius: 18px; overflow: hidden; background: var(--panel); border: 1px solid var(--border); box-shadow: var(--shadow); display: flex; height: 180px; position:relative;}
+    .cover-spine { width:4px; height:100%; position:absolute; left:0;top:0; bottom:0;}
+    .card-letter { position:absolute; left:20px; top:20px; opacity:0.08; font-family:'Playfair Display', serif; font-size:3rem; font-weight:900;}
+    .body { padding: 24px; padding-left:32px; display: flex; flex-direction: column; gap: 10px; flex: 1; align-items: flex-start; text-align: left; }
+    .body h3 { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 1.15rem; max-width: 100%; font-family:'Playfair Display', serif; font-weight:700;}
+    .meta { color: var(--muted); font-size: .85rem; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }
+    .bar { height: 6px; background: rgba(0,0,0,.08); border-radius: 999px; overflow: hidden; width:100%;}
+    .bar span { display: block; height: 100%; background: var(--accent); }
+    .actions { display: flex; gap: 8px; margin-top: auto; flex-wrap: wrap; justify-content: flex-start; width: 100%; }
+
+    .reader { max-width: 1600px; margin: 0 auto; display:flex; flex-direction:column;}
+    
+    /* Header Toolbar */
+    .toolbar { position: sticky; top: 0; z-index: 50; border-radius: 0 0 24px 24px; padding: 0 24px; display: flex; height:64px; align-items: center; justify-content:space-between; margin-bottom: 24px; backdrop-filter: blur(20px); background:var(--panel); border-bottom:1px solid var(--border); box-shadow:0 4px 12px rgba(0,0,0,0.03);}
+    .toolbar-left { display:flex; align-items:center; gap:16px; flex:1; min-width:0;}
+    .toolbar-center { display:flex; align-items:center; gap:16px; justify-content:center; flex:1; font-family:'Playfair Display', serif; font-size:1.1rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;}
+    .page-info { font-family:'DM Sans', sans-serif; font-size:0.85rem; font-weight:600; color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap; flex:0 0 auto; padding-right:4px;}
+    .toolbar-right { display:flex; align-items:center; justify-content:flex-end; gap:10px; flex:1; min-width:0;}
+    .toolbar-right button { transition:transform 0.15s; }
+    .toolbar-right button:hover { transform:scale(1.12); }
+
+    .exportwrap { position: relative; }
+    .exportmenu { position: absolute; top: calc(100% + 8px); right: 0; min-width: 220px; padding: 8px; border-radius: 16px; background: var(--panel); border: 1px solid var(--border); box-shadow: var(--shadow); display: none; z-index: 100; }
+    .exportmenu.on { display: grid; gap: 6px; }
+    .exportmenu button { justify-content: flex-start; background: transparent; color: var(--fg); width: 100%; padding: 10px 12px; }
+
+    .readercontent { max-width: min(var(--reading-width), calc(100vw - 24px)); margin: 0 auto; padding: 16px 0 70px; display: flex; flex-direction: column; gap: 32px; }
+    .readercontent.columns2 .pageinner { column-count: 2; column-gap: 2rem; column-fill: auto; }
+    
+    .page { position: relative; border-radius: 0; background: var(--page-bg); border-top: 1px solid color-mix(in srgb, var(--page-accent) 15%, transparent); box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.06), 0 24px 64px rgba(0,0,0,0.04); min-height: 440px; animation: pageIn 0.6s ease forwards; opacity:0; content-visibility: auto; contain-intrinsic-size: 0 700px; }
+    .page:nth-child(1){animation-delay:0.0s} .page:nth-child(2){animation-delay:0.1s} .page:nth-child(3){animation-delay:0.2s} .page:nth-child(4){animation-delay:0.3s} .page:nth-child(n+5){animation-delay:0.4s}
+    @keyframes pageIn { from { opacity:0; transform:translateY(24px) } to { opacity:1; transform:translateY(0) } }
+
+    .pageinner { position: relative; padding: 48px 56px 64px; font-family: var(--reader-font); font-size: var(--font-size); line-height: var(--line-height); letter-spacing: var(--letter-spacing); word-spacing: var(--word-spacing); color: var(--page-fg); transition: background .3s, color .3s; }
+    .pageinner p { margin: 0 0 var(--paragraph-spacing); }
+    .footer { position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); color: var(--muted); font-size: .85rem; font-variant: small-caps; }
+    .footer::before, .footer::after { content: "\2014"; margin:0 8px;}
+
+    mark.search { background: #FFB347; color: #111; border-radius: 3px; padding: 0 2px; }
+    mark.user { border-radius: 3px; padding: 0 2px; color: inherit; }
+    .tts { background: color-mix(in srgb, var(--page-accent) 24%, transparent); box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--page-accent) 45%, transparent); }
+    
+    .readerempty { max-width: 760px; margin: 70px auto; padding: 48px 40px; border-radius: 24px; border: 1px solid var(--border); background: var(--panel); box-shadow: var(--shadow); text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .readerempty i { font-size: 3rem; color: var(--accent); }
+    .readerempty svg { width: 84px; height: 84px; opacity: .9; }
+    .readerempty h2 { margin: 6px 0 0; }
+    .readerempty p { margin: 0; color: var(--muted); max-width: 42ch; }
+    /* Compact, balanced empty state when shown inside the library grid */
+    .grid .readerempty { margin: 0; padding: 40px 28px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .grid .readerempty svg { width: 72px; height: 72px; }
+    .grid .readerempty h2 { margin: 12px 0 2px; }
+    .grid .readerempty p { margin: 0; }
+
+    .backdrop, .modback { position: fixed; inset: 0; background: rgba(0,0,0,.15); backdrop-filter:blur(3px); opacity: 0; pointer-events: none; transition: .2s; z-index: 84; }
+    .backdrop.on, .modback.on { opacity: 1; pointer-events: auto; }
+    
+    /* Drawers */
+    .drawer { position: fixed; top: 12px; right: 12px; bottom: 12px; width: min(380px, calc(100vw - 24px)); transform: translateX(110%); transition: transform 0.4s cubic-bezier(0.32, 0, 0.67, 0); z-index: 90; border-radius: 22px; overflow: hidden; display: flex; flex-direction: column; background:var(--panel); backdrop-filter:blur(24px);}
+    .drawer.on { transform: translateX(0); transition: transform 0.4s cubic-bezier(0.33, 1, 0.68, 1);}
+    .drawer header, .modal header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 8px; position:relative;}
+    .drawer header::before { content:''; position:absolute; top:0;left:0;right:0; height:2px; background:linear-gradient(90deg, var(--accent), var(--accent2));}
+    .drawer header h3 { margin:0; font-size:1.1rem; display:flex; align-items:center; gap:8px;}
+    .drawercontent, .modalcontent { padding: 0; overflow: auto; flex: 1; }
+    .drawercontent-inner { padding: 20px; display:flex; flex-direction:column; gap:20px;}
+
+    .item { display: flex; justify-content: space-between; gap: 10px; padding: 16px 20px; border-bottom: 1px solid rgba(0,0,0,.04); transition:background 0.2s;}
+    .item:hover { background:rgba(0,0,0,0.02); border-left:3px solid var(--accent); padding-left:17px;}
+    .item strong { display: block; margin-bottom: 4px; font-weight:600;}
+    .item small { color: var(--muted); }
+    .item .ops { display: flex; gap: 8px; }
+
+    .statgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom:20px;}
+    .stat { padding: 16px; border-radius: 16px; background: rgba(255,255,255,.62); background: var(--surface); border: 1px solid var(--border); text-align:center; min-width:0;}
+    .stat .label { font-size: .75rem; color: var(--muted); margin-bottom: 6px; text-transform:uppercase; letter-spacing:1px; font-weight:600;}
+    .stat .value { font-size: 1.6rem; font-weight: 700; font-family:'Playfair Display', serif; color:var(--accent); min-width:0; overflow-wrap:anywhere;}
+
+    .reading-ring-container { display:flex; justify-content:center; align-items:center; margin:20px 0;}
+    .reading-ring { position:relative; width:120px; height:120px;}
+    .reading-ring svg { transform:rotate(-90deg); width:100%; height:100%;}
+    .reading-ring circle { fill:none; stroke-width:8; stroke:rgba(0,0,0,0.05); }
+    .reading-ring circle.progress { stroke:var(--accent); stroke-dasharray:314; stroke-dashoffset:314; transition:stroke-dashoffset 1s ease;}
+    .reading-ring .center { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:700; color:var(--fg);}
+
+    .modal { position: fixed; inset: 50% auto auto 50%; transform: translate(-50%, -50%) scale(.96); opacity: 0; pointer-events: none; transition: .2s; z-index: 92; width: min(720px, calc(100vw - 24px)); border-radius: 22px; overflow: hidden; background:var(--panel); backdrop-filter:blur(24px);}
+    .modal.on { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+    .helpgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .key { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 12px 14px; border-radius: 14px; background: rgba(255,255,255,.6); background: var(--surface); border: 1px solid var(--border); }
+    kbd { font-family: 'JetBrains Mono', monospace; background: rgba(0,0,0,.08); border-radius: 8px; padding: 3px 7px; font-size: .84rem; }
+
+    /* Searchbar spotlight style */
+    .searchbar { position: fixed; left: 50%; top: 40px; transform: translateX(-50%) translateY(-20px); opacity: 0; pointer-events: none; z-index: 94; width: min(600px, calc(100vw - 18px)); border-radius: 99px; padding: 12px 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; transition: .2s; }
+    .searchbar.on { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+    .searchbar .input { flex: 1; min-width: 170px; border:none; background:transparent; font-size:1.1rem; outline:none;}
+    .searchcount { color: var(--muted); font-weight: 600; margin-left: auto; font-size:0.9rem; background:rgba(0,0,0,0.05); padding:4px 10px; border-radius:99px;}
+
+    /* Popups */
+    .popup { position: absolute; z-index: 96; border-radius: 99px; display: none; padding:8px 16px; flex-direction:row; align-items:center; gap:12px; box-shadow:var(--shadow); max-width:calc(100vw - 24px);}
+    .popup::after { content:''; position:absolute; bottom:-6px; left:50%; transform:translateX(-50%); border-style:solid; border-width:6px 6px 0; border-color:var(--panel) transparent transparent;}
+    .popup.on { display: flex; }
+    
+    .colors { display: flex; gap: 8px; }
+    .colors button { width: 28px; height: 28px; border: 0; border-radius: 50%; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(0,0,0,.1); transition:transform 0.1s;}
+    .colors button:hover { transform:scale(1.2);}
+    .popup-divider { width:1px; height:24px; background:var(--border);}
+
+    .row2 { display: flex; gap: 8px; flex-wrap: wrap; }
+    .row2 input { flex: 1; min-width: 130px; border: 1px solid var(--border); border-radius: 12px; padding: 10px; background: rgba(255,255,255,.65); background: var(--surface); color: var(--fg); outline:none;}
+    
+    .dict { position: absolute; z-index: 96; border-radius: 16px; display: none; padding: 20px; width: min(360px, calc(100vw - 20px)); max-height:min(70vh, 420px); overflow:auto; border-left:3px solid var(--accent); background:var(--panel);}
+    .dict.on { display:flex; flex-direction:column; gap:12px; }
+    #dictWord { font-family:'Playfair Display', serif; font-size:1.6rem; font-style:italic;}
+    #dictPhonetic { color:var(--muted); font-size:0.9rem; font-family:'DM Sans';}
+    #dictBody { font-family:'Crimson Pro', serif; font-size:1.1rem; line-height:1.5; color:var(--fg);}
+
+    .toastwrap { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 120; display: grid; gap: 10px; pointer-events: none; }
+    .toast { min-width: 240px; padding: 14px 20px; background: rgba(28,28,28,.92); color: #fff; border-radius: 16px; border-left:3px solid var(--accent); animation: toast 2.8s cubic-bezier(0.2,0.8,0.2,1) forwards; box-shadow:var(--shadow);}
+    @keyframes toast { 0% { opacity: 0; transform: translateY(20px) } 12% { opacity: 1; transform: translateY(0) } 84% { opacity: 1; transform: translateY(0) } 100% { opacity: 0; transform: translateY(14px) } }
+    
+    .loading { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(255,255,255,.8); backdrop-filter:blur(5px); z-index: 110; opacity: 0; pointer-events: none; transition: .2s; }
+    .loading.on { opacity: 1; pointer-events: auto; }
+    .spin { width: 50px; height: 50px; border-radius: 50%; border: 4px solid rgba(0,0,0,.05); border-top-color: var(--accent); animation: spin 1s linear infinite; margin: 0 auto 16px; }
+    @keyframes spin { to { transform: rotate(360deg) } }
+
+    .focusbtn { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 101; opacity: 0; pointer-events: none; transition: .2s; }
+    body.focus .focusbtn { opacity: 1; pointer-events: auto; }
+    body.focus .toolbar, body.focus .drawer, body.focus .modal, body.focus .backdrop, body.focus .searchbar, body.focus .popup, body.focus .dict, body.focus .tts-player { display: none !important; }
+    body.focus .page { background: transparent; border-color: transparent; box-shadow: none; }
+    
+    /* Settings specific */
+    .slider-group { display: flex; flex-direction: column; gap: 6px; }
+    .slider-group label { display: flex; justify-content: space-between; gap: 8px; font-size: .85rem; color: var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:0.5px;}
+    .val { min-width: 38px; text-align: right; }
+    
+    /* TTS Mini Player */
+    .tts-player { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(100px); z-index:90; background:var(--panel); border:1px solid var(--border); box-shadow:var(--shadow); border-radius:99px; padding:12px 20px; display:flex; align-items:center; gap:16px; opacity:0; transition:0.3s; pointer-events:none;}
+    .tts-player.on { transform:translateX(-50%) translateY(0); opacity:1; pointer-events:auto;}
+
+    @media (max-width: 1100px) { .hero { grid-template-columns: 1fr; } .helpgrid, .statgrid { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) { 
+        .toolbar { padding: 10px; height:auto; min-height:64px; gap:8px; flex-wrap:wrap; }
+        .toolbar-left { flex:0 0 auto; }
+        .toolbar-center { order:-1; flex:1 1 100%; justify-content:flex-start; font-size:1rem; }
+        .toolbar-right { flex:1 1 100%; justify-content:flex-start; overflow-x:auto; padding-bottom:2px; }
+        .toolbar-right::-webkit-scrollbar { display:none; }
+        .toolbar-right .btn, .toolbar-right .exportwrap, .page-info { flex:0 0 auto; }
+        .pageinner { padding: 32px 24px 46px; } .view { padding-inline: 10px; }
+        .readercontent.columns2 .pageinner { column-count: 1; }
+        .drawer { right: 0; left: 0; bottom: 0; top: auto; width: 100vw; max-height:85vh; max-height:85dvh; border-radius:24px 24px 0 0; transform:translateY(100%); }
+        .drawer.on { transform:translateY(0);}
+        .searchbar { top: 12px; border-radius:24px; padding:12px 16px; } 
+        .popup { border-radius:24px; gap:8px; padding:10px 12px; }
+        .popup-divider { display:none; }
+        .colors, .row2 { width:100%; justify-content:center; }
+        #noteRow { width:min(320px, calc(100vw - 24px)); }
+        .tts-player { width:calc(100vw - 32px); bottom:16px; border-radius:24px;}
+        /* Shrink decorative hero book so it stops overlapping the chip text */
+        .hero-icon { width:160px; height:160px; opacity:0.35; right:-30px; bottom:-30px; }
+        /* Larger comfortable touch targets for highlight popup + colour swatches */
+        #addNote, #lookupSel, #copySel { width:44px !important; height:44px !important; }
+        .colors button { width:44px; height:44px; }
+        /* Toolbar icon buttons up to a full 44px touch target */
+        .toolbar-right .btn.icon-only { width:44px; min-height:44px; }
+        /* Shorter responsive page so short pages don't leave big empty gaps */
+        .page { min-height:60vh; min-height:60dvh; }
+    }
+    @font-face{font-family:'OpenDyslexic';src:url('https://cdn.jsdelivr.net/npm/@fontsource/opendyslexic/files/opendyslexic-latin-400-normal.woff2') format('woff2');font-display:swap}
+
+    /* Visible keyboard-focus styles */
+    button:focus-visible, .btn:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible, [tabindex]:focus-visible {
+      outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px;
+    }
+    /* Drawers/modals use overflow:hidden — pull the focus ring inward so it isn't clipped */
+    .drawercontent :focus-visible, .modalcontent :focus-visible,
+    .drawer header :focus-visible, .modal header :focus-visible {
+      outline-offset: -2px;
+    }
+
+    /* ---- Graceful degradation for older browsers ---- */
+    /* backdrop-filter unsupported: make translucent panels solid so content stays legible */
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+      .card, .drawer, .modal, .popup, .searchbar, .dict, .toolbar, .tts-player, .exportmenu, .loading {
+        background: var(--page-bg);
+      }
+      .backdrop, .modback { background: rgba(0,0,0,.45); }
+    }
+    /* color-mix unsupported: provide solid fallbacks for accent-tinted surfaces */
+    @supports not (background: color-mix(in srgb, red, blue)) {
+      .page { border-top: 1px solid var(--border); }
+      .tts { background: rgba(122,162,255,.28); box-shadow: inset 0 -2px 0 rgba(122,162,255,.5); }
+    }
+    /* :has() unsupported: the styled track can't reflect state, so fall back to the
+       native checkbox (still fully usable) instead of a switch that never updates. */
+    @supports not selector(:has(*)) {
+      .toggle { width: auto; height: auto; margin-top: 0; }
+      .toggle::before, .toggle::after { display: none; }
+      .toggle input { opacity: 1; width: 20px; height: 20px; position: static; accent-color: var(--accent); cursor: pointer; }
+    }
+
+    /* Print styles */
+    @media print {
+      .toolbar, .topbar, .drawer, .modal, .backdrop, .modback, .searchbar, .popup, .dict, .toastwrap, .loading, .tts-player, .focusbtn, .exportmenu { display: none !important; }
+      body::before, body::after { display: none !important; }
+      body { background: #fff; color: #000; }
+      .page { box-shadow: none !important; animation: none !important; opacity: 1 !important; border-top: none; }
+      .pageinner { color: #000; }
+      .view { padding: 0; }
+      .readercontent { max-width: none; }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.001s !important; animation-iteration-count: 1 !important; transition-duration: 0.001s !important; scroll-behavior: auto !important; }
+      .page { opacity: 1 !important; animation: none !important; transform: none !important; }
+      .toast { animation: none !important; opacity: 1 !important; }
+      .spin { animation: none !important; }
+      #landingView, #readerView { animation: none !important; opacity: 1 !important; transform: none !important; }
+    }
+
+  
+  </style>
 </head>
 <body>
-  <p>Redirecting to <a href="./textbook%20reader.html">Local Book Reader</a>...</p>
+<div class="topbar"><div id="progressBar"></div></div>
+  <div class="loading" id="loading"><div><div class="spin"></div><div id="loadingText" style="font-weight:700;text-align:center;font-size:1.1rem">Parsing book...</div></div></div>
+  <div class="backdrop" id="backdrop"></div>
+  <div class="modback" id="modback"></div>
+  
+  <div class="searchbar" id="searchbar" role="search">
+    <i class="fa-solid fa-magnifying-glass" style="color:var(--muted)" aria-hidden="true"></i>
+    <input class="input" id="searchInput" placeholder="Search this book..." aria-label="Search this book" style="flex:1">
+    <span class="searchcount" id="searchCount" aria-live="polite">0 of 0</span>
+    <button class="btn secondary icon-only" id="prevMatch" aria-label="Previous match"><i class="fa-solid fa-angle-up" aria-hidden="true"></i></button>
+    <button class="btn secondary icon-only" id="nextMatch" aria-label="Next match"><i class="fa-solid fa-angle-down" aria-hidden="true"></i></button>
+    <button class="btn secondary icon-only" id="closeSearch" style="border-radius:50%" aria-label="Close search"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+  </div>
+  
+  <div class="popup" id="popup">
+    <div class="colors">
+      <button data-color="#FFD700" style="background:#FFD700" aria-label="Highlight yellow"></button>
+      <button data-color="#90EE90" style="background:#90EE90" aria-label="Highlight green"></button>
+      <button data-color="#FFB6C1" style="background:#FFB6C1" aria-label="Highlight pink"></button>
+      <button data-color="#ADD8E6" style="background:#ADD8E6" aria-label="Highlight blue"></button>
+    </div>
+    <div class="popup-divider"></div>
+    <div class="row2">
+      <button class="btn secondary icon-only" id="addNote" style="border-radius:50%;width:32px;height:32px" aria-label="Add note"><i class="fa-regular fa-note-sticky"></i></button>
+      <button class="btn secondary icon-only" id="lookupSel" style="border-radius:50%;width:32px;height:32px" title="Dictionary" aria-label="Look up in dictionary"><i class="fa-solid fa-book"></i></button>
+      <button class="btn secondary icon-only" id="copySel" style="border-radius:50%;width:32px;height:32px" aria-label="Copy selection"><i class="fa-regular fa-copy"></i></button>
+      <button class="btn secondary icon-only" id="citeSel" style="border-radius:50%;width:32px;height:32px" title="Copy as citation" aria-label="Copy selection as citation"><i class="fa-solid fa-quote-right"></i></button>
+    </div>
+  </div>
+  <div class="popup hidden" id="noteRow" style="padding:12px;flex-direction:column;align-items:stretch;top:calc(100% + 10px);">
+    <input id="noteText" placeholder="Write a note..." aria-label="Write a note for this highlight" class="input" style="margin-bottom:8px">
+    <button class="btn" id="saveNote">Save</button>
+  </div>
+
+  <div class="dict" id="dict" role="dialog" aria-label="Dictionary definition">
+    <div class="row" style="justify-content:space-between;margin-bottom:8px">
+      <div><div id="dictWord"></div><div id="dictPhonetic"></div></div>
+      <div>
+        <button class="btn secondary icon-only" id="dictSpeak" aria-label="Speak word"><i class="fa-solid fa-volume-high" aria-hidden="true"></i></button>
+        <button class="btn secondary icon-only" id="closeDictBtn" aria-label="Close dictionary"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+      </div>
+    </div>
+    <div id="dictBody"></div>
+  </div>
+
+  <div class="toastwrap" id="toastwrap" role="status" aria-live="polite"></div>
+  <button class="btn secondary focusbtn" id="focusExit"><i class="fa-solid fa-compress" aria-hidden="true"></i> Esc to exit</button>
+
+  <section id="landingView" class="view landing">
+    <div class="hero">
+      <div class="hero-card card">
+        <div style="position:relative;z-index:2">
+          <h1>Read locally,<br>beautifully.</h1>
+          <p>Upload a TXT, PDF, EPUB, or HTML file and read it right here with themes, notes, bookmarks, search, stats, and read-aloud. Your books are parsed and stored in your browser &mdash; only the optional dictionary lookup contacts a third-party API, and just for the single word you select.</p>
+          <div class="chips">
+            <span class="chip"><i class="fa-solid fa-folder-open" aria-hidden="true"></i> Single file</span>
+            <span class="chip"><i class="fa-solid fa-bookmark" aria-hidden="true"></i> Local marks</span>
+            <span class="chip"><i class="fa-solid fa-highlighter" aria-hidden="true"></i> Highlights</span>
+            <span class="chip"><i class="fa-solid fa-volume-high" aria-hidden="true"></i> Speed reading</span>
+          </div>
+          <p class="chip" style="display:inline-flex;align-items:center;gap:8px;margin-top:16px;max-width:none"><i class="fa-solid fa-shield-halved" style="color:var(--accent)"></i> No account &middot; no tracking &middot; your files never leave your browser</p>
+        </div>
+        <svg class="hero-icon" width="280" height="280" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+        </svg>
+      </div>
+      <div class="card uploadbox">
+        <div class="drop" id="drop">
+          <div>
+            <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+            <h3 style="margin:12px 0 4px;font-family:'DM Sans', sans-serif;">Drop a book here</h3>
+            <div style="color:var(--muted);font-size:.92rem">TXT, PDF, EPUB, HTML</div>
+          </div>
+          <div class="row" style="margin-top:16px;">
+            <label class="btn" for="fileInput"><i class="fa-solid fa-upload" aria-hidden="true"></i> Browse Files</label>
+            <button class="btn secondary" id="demoBtn"><i class="fa-solid fa-book" aria-hidden="true"></i> Demo Book</button>
+          </div>
+        </div>
+        <input id="fileInput" type="file" accept=".txt,.pdf,.epub,.html,.htm" multiple hidden>
+      </div>
+    </div>
+    <div class="library">
+      <div class="row" style="justify-content:space-between;margin-bottom:16px">
+        <div><h2 style="margin:0 0 4px;font-size:1.6rem;font-family:'Playfair Display'">Your Library</h2></div>
+        <button class="btn secondary" id="clearLib"><i class="fa-solid fa-trash" aria-hidden="true"></i> Clear All</button>
+      </div>
+      <div class="row" id="libraryControls" style="margin-bottom:16px;gap:10px">
+        <input class="input" id="librarySearch" type="search" placeholder="Search your library..." aria-label="Search your library" style="flex:1;min-width:180px;background:var(--panel)">
+        <select class="select" id="librarySort" aria-label="Sort library">
+          <option value="recent">Recent</option>
+          <option value="title">Title A-Z</option>
+          <option value="progress">Progress</option>
+        </select>
+      </div>
+      <div class="grid" id="libraryGrid"></div>
+    </div>
+  </section>
+
+  <section id="readerView" class="view reader hidden">
+    <a href="#readerContent" class="btn" id="skipLink" style="position:absolute;left:8px;top:8px;z-index:200;transform:translateY(-150%);transition:transform .15s;text-decoration:none">Skip to content</a>
+    <div class="toolbar" id="toolbar">
+      <div class="toolbar-left">
+        <button class="btn secondary icon-only" id="toLibrary" title="Back to Library" aria-label="Back to Library"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
+      </div>
+      <div class="toolbar-center" id="bookTitle">No book open</div>
+      <div class="toolbar-right">
+        <span class="page-info" id="pageInfo">0 / 0</span>
+        <button class="btn secondary icon-only" id="searchBtn" title="Search" aria-label="Search" aria-haspopup="dialog" aria-expanded="false"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></button>
+        <button class="btn secondary icon-only" id="bookmarkBtn" title="Bookmark" aria-label="Bookmark" aria-haspopup="dialog" aria-expanded="false"><i class="fa-solid fa-bookmark" aria-hidden="true"></i></button>
+        <button class="btn secondary icon-only" id="highlightsBtn" title="Highlights" aria-label="Highlights" aria-haspopup="dialog" aria-expanded="false"><i class="fa-solid fa-highlighter" aria-hidden="true"></i></button>
+        <button class="btn secondary icon-only" id="statsBtn" title="Stats" aria-label="Reading stats" aria-haspopup="dialog" aria-expanded="false"><i class="fa-solid fa-chart-column" aria-hidden="true"></i></button>
+        <button class="btn secondary icon-only" id="ttsBtn" title="Read Aloud" aria-label="Read aloud"><i class="fa-solid fa-volume-high" aria-hidden="true"></i></button>
+        <button class="btn secondary icon-only" id="focusBtn" title="Focus Mode" aria-label="Toggle focus mode" aria-pressed="false"><i class="fa-solid fa-expand" aria-hidden="true"></i></button>
+        <div class="exportwrap">
+          <button class="btn secondary icon-only" id="exportBtn" title="Export" aria-label="Export"><i class="fa-solid fa-file-export"></i></button>
+          <div class="exportmenu" id="exportMenu">
+            <button id="exportNotesBtn"><i class="fa-solid fa-file-lines"></i> Export Highlights (TXT)</button>
+            <button id="exportNotesMdBtn"><i class="fa-brands fa-markdown"></i> Export Highlights (Markdown)</button>
+            <button id="exportNotesJsonBtn"><i class="fa-solid fa-code"></i> Export Highlights (JSON)</button>
+            <button id="printBtn"><i class="fa-solid fa-print"></i> Print Book</button>
+            <button id="exportLibraryBtn"><i class="fa-solid fa-box-archive"></i> Export Library (backup)</button>
+            <button id="importLibraryBtn"><i class="fa-solid fa-upload"></i> Import Library (restore)</button>
+            <input id="importLibraryInput" type="file" accept=".json,application/json" hidden>
+          </div>
+        </div>
+        <button class="btn secondary icon-only" id="helpToolbarBtn" title="Keyboard Shortcuts" aria-label="Keyboard shortcuts" aria-haspopup="dialog" aria-expanded="false"><i class="fa-regular fa-circle-question" aria-hidden="true"></i></button>
+        <button class="btn secondary icon-only" id="settingsBtn" title="Settings" aria-label="Settings" aria-haspopup="dialog" aria-expanded="false"><i class="fa-solid fa-gear" aria-hidden="true"></i></button>
+      </div>
+    </div>
+
+    <main class="readercontent" id="readerContent" tabindex="-1"></main>
+    <div class="readerempty hidden" id="readerEmpty">
+      <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+      <h2 style="margin:16px 0 6px;font-family:'Playfair Display'">Open a book to begin</h2>
+      <p style="margin:0;color:var(--muted)">Go back to the library and upload a file.</p>
+      <button class="btn" id="openFileBtn" style="margin-top:18px"><i class="fa-solid fa-upload" aria-hidden="true"></i> Choose a file</button>
+    </div>
+  </section>
+
+  <!-- Drawers -->
+  <aside class="drawer" id="settingsDrawer" role="dialog" aria-modal="true" aria-labelledby="settingsDrawerTitle"><header><h3 id="settingsDrawerTitle"><i class="fa-solid fa-gear" aria-hidden="true"></i> Settings</h3><button class="btn secondary icon-only closeDrawer" aria-label="Close settings"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header><div class="drawercontent"><div class="drawercontent-inner">
+      <div class="row"><span class="small" style="font-weight:600;text-transform:uppercase;color:var(--muted);width:80px">Theme</span><select class="select" id="themeSelect" style="flex:1"><option value="paper">Paper White</option><option value="sepia">Sepia</option><option value="night">Night Dark</option><option value="amoled">AMOLED Black</option><option value="ocean">Ocean Blue</option><option value="custom">Custom</option></select></div>
+      <div class="row" style="padding-left:90px"><input class="color" id="bgColor" type="color" title="Background" style="flex:1"><input class="color" id="fgColor" type="color" title="Text" style="flex:1"><input class="color" id="accentColor" type="color" title="Accent" style="flex:1"></div>
+      <div class="row"><span class="small" style="font-weight:600;text-transform:uppercase;color:var(--muted);width:80px">Font</span><select class="select" id="fontSelect" style="flex:1"></select></div>
+      <hr style="border:0;border-top:1px solid var(--border);margin:10px 0">
+      <div class="slider-group"><label>Font Size <span id="fontSizeVal" class="val">18px</span></label><input class="range" id="fontSize" type="range" min="12" max="32" step="1" value="18"></div>
+      <div class="slider-group"><label>Line Spacing <span id="lineHeightVal" class="val">1.7</span></label><input class="range" id="lineHeight" type="range" min="1.2" max="2.5" step="0.05" value="1.7"></div>
+      <div class="slider-group"><label>Letter Spacing <span id="letterSpacingVal" class="val">0px</span></label><input class="range" id="letterSpacing" type="range" min="-1" max="5" step="0.1" value="0"></div>
+      <div class="slider-group"><label>Word Spacing <span id="wordSpacingVal" class="val">0px</span></label><input class="range" id="wordSpacing" type="range" min="0" max="10" step="0.1" value="0"></div>
+      <div class="slider-group"><label>Paragraph Spacing <span id="paraSpacingVal" class="val">18px</span></label><input class="range" id="paraSpacing" type="range" min="0" max="40" step="1" value="18"></div>
+      <div class="slider-group"><label>Reading Width <span id="readingWidthVal" class="val">680px</span></label><input class="range" id="readingWidth" type="range" min="400" max="1200" step="10" value="680"></div>
+      <hr style="border:0;border-top:1px solid var(--border);margin:10px 0">
+      <div class="row" style="justify-content:space-between"><label for="columnsToggle" style="font-weight:600;text-transform:uppercase;color:var(--muted);font-size:.85rem">Two Columns</label><label class="toggle"><input type="checkbox" id="columnsToggle" aria-label="Two columns"></label></div>
+      <div class="row" style="justify-content:space-between"><label for="focusToggle" style="font-weight:600;text-transform:uppercase;color:var(--muted);font-size:.85rem">Focus Mode</label><label class="toggle"><input type="checkbox" id="focusToggle" aria-label="Focus mode"></label></div>
+      <div class="row" style="justify-content:space-between;align-items:center"><label for="jumpPage" style="font-weight:600;text-transform:uppercase;color:var(--muted);font-size:.85rem">Jump to Page</label><input class="input jump" id="jumpPage" type="number" min="1" placeholder="#" aria-label="Jump to page number" style="width:80px"></div>
+      <div class="row" style="margin-top:10px"><button class="btn secondary" id="nightModeBtn" style="flex:1"><i class="fa-solid fa-moon" aria-hidden="true"></i> Toggle Night</button><button class="btn secondary" id="helpBtn" style="flex:1"><i class="fa-regular fa-circle-question" aria-hidden="true"></i> Shortcuts</button></div>
+  </div></div></aside>
+
+  <aside class="drawer" id="bookmarksDrawer" role="dialog" aria-modal="true" aria-labelledby="bookmarksDrawerTitle"><header><h3 id="bookmarksDrawerTitle"><i class="fa-solid fa-bookmark" aria-hidden="true"></i> Bookmarks</h3><button class="btn secondary icon-only closeDrawer" aria-label="Close bookmarks"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header><div class="drawercontent" id="bookmarksList"></div></aside>
+  <aside class="drawer" id="highlightsDrawer" role="dialog" aria-modal="true" aria-labelledby="highlightsDrawerTitle"><header><h3 id="highlightsDrawerTitle"><i class="fa-solid fa-highlighter" aria-hidden="true"></i> Highlights</h3><button class="btn secondary icon-only closeDrawer" aria-label="Close highlights"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header><div class="drawercontent" id="highlightsList"></div></aside>
+  <aside class="drawer" id="statsDrawer" role="dialog" aria-modal="true" aria-labelledby="statsDrawerTitle"><header><h3 id="statsDrawerTitle"><i class="fa-solid fa-chart-column" aria-hidden="true"></i> Reading Stats</h3><button class="btn secondary icon-only closeDrawer" aria-label="Close stats"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header><div class="drawercontent"><div class="drawercontent-inner">
+        <div class="reading-ring-container">
+            <div class="reading-ring">
+                <svg aria-hidden="true"><circle cx="60" cy="60" r="50"></circle><circle class="progress" cx="60" cy="60" r="50" id="progressRing"></circle></svg>
+                <div class="center" id="progressText">0%</div>
+            </div>
+        </div>
+        <div class="statgrid" id="statsGrid"></div>
+        <div style="color:var(--muted);font-size:.92rem;line-height:1.5;text-align:center">🔥 Streak: <span id="streakFlame">0</span> days</div>
+  </div></div></aside>
+  
+  <div class="modal" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpModalTitle"><header><h3 id="helpModalTitle"><i class="fa-regular fa-circle-question" aria-hidden="true"></i> Keyboard Shortcuts</h3><button class="btn secondary icon-only" id="helpClose" aria-label="Close shortcuts"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></header><div class="modalcontent" style="padding:20px"><div class="helpgrid" id="helpGrid"></div></div></div>
+
+  <div class="tts-player" id="ttsPlayer">
+    <button class="btn icon-only" id="ttsPlay" aria-label="Play or pause read aloud"><i class="fa-solid fa-play" aria-hidden="true"></i></button>
+    <button class="btn secondary icon-only" id="ttsStop" aria-label="Stop read aloud"><i class="fa-solid fa-stop" aria-hidden="true"></i></button>
+    <select class="select" id="voiceSelect" aria-label="Speech voice" style="max-width:180px"></select>
+    <input class="range" id="ttsRate" type="range" min="0.5" max="2" step="0.1" value="1" aria-label="Reading speed" style="width:100px">
+  </div>
+
+  <script>
+    const $ = s => document.querySelector(s);
+    const $$ = s => [...document.querySelectorAll(s)];
+    const STORAGE = { library:'book_reader_library', settings:'book_reader_settings', stats:'book_reader_stats' };
+    // --- IndexedDB layer for bulky book content -----------------------------
+    // Large parsed books (pages + full text) can easily exceed the ~5MB
+    // localStorage cap. They live in IndexedDB instead, which has no practical
+    // size limit. Small metadata (library list, settings, stats, bookmarks,
+    // highlights, resume, daily pages) stays in localStorage as before.
+    const IDB = { name:'book_reader_db', store:'books', version:1 };
+    let idbPromise = null;
+    function idbOpen(){
+      if(idbPromise) return idbPromise;
+      idbPromise = new Promise((resolve, reject) => {
+        try{
+          if(typeof indexedDB === 'undefined' || !indexedDB){ reject(new Error('IndexedDB unavailable')); return; }
+          const req = indexedDB.open(IDB.name, IDB.version);
+          req.onupgradeneeded = () => {
+            const db = req.result;
+            if(!db.objectStoreNames.contains(IDB.store)) db.createObjectStore(IDB.store);
+          };
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error || new Error('IndexedDB open failed'));
+          req.onblocked = () => reject(new Error('IndexedDB blocked'));
+        }catch(err){ reject(err); }
+      }).catch(err => { idbPromise = null; throw err; });
+      return idbPromise;
+    }
+    function idbTx(mode, fn){
+      return idbOpen().then(db => new Promise((resolve, reject) => {
+        try{
+          const tx = db.transaction(IDB.store, mode);
+          const store = tx.objectStore(IDB.store);
+          const result = fn(store);
+          tx.oncomplete = () => resolve(result && result.__req ? result.__req.result : result);
+          tx.onerror = () => reject(tx.error || new Error('IndexedDB transaction failed'));
+          tx.onabort = () => reject(tx.error || new Error('IndexedDB transaction aborted'));
+        }catch(err){ reject(err); }
+      }));
+    }
+    function idbPutBook(key, payload){
+      return idbTx('readwrite', store => ({ __req: store.put(payload, String(key)) }));
+    }
+    function idbGetBook(key){
+      return idbTx('readonly', store => ({ __req: store.get(String(key)) }))
+        .then(v => v == null ? null : v);
+    }
+    function idbDeleteBook(key){
+      return idbTx('readwrite', store => ({ __req: store.delete(String(key)) }));
+    }
+    function idbAllKeys(){
+      return idbTx('readonly', store => ({ __req: store.getAllKeys() }))
+        .then(keys => Array.isArray(keys) ? keys.map(String) : []);
+    }
+    const THEMES = {
+      paper:{bg:'#FAFAF8',fg:'#1a1a1a',pageBg:'#FEFCF8',accent:'#4f7cff',panel:'rgba(255,255,255,.84)',texture:.07},
+      sepia:{bg:'#F4ECD8',fg:'#5b4636',pageBg:'#F9F2E3',accent:'#a96b2d',panel:'rgba(255,248,236,.88)',texture:.08},
+      night:{bg:'#121212',fg:'#E0E0E0',pageBg:'#1E1E1E',accent:'#7aa2ff',panel:'rgba(24,24,24,.88)',texture:.05},
+      amoled:{bg:'#000',fg:'#fff',pageBg:'#111',accent:'#66aaff',panel:'rgba(10,10,10,.96)',texture:.03},
+      ocean:{bg:'#0D1B2A',fg:'#A8DADC',pageBg:'#0F2233',accent:'#4cc9f0',panel:'rgba(10,25,40,.9)',texture:.05}
+    };
+    const FONT_OPTIONS = [
+      ['Crimson Pro',"'Crimson Pro', serif"],
+      ['Lora',"'Lora', serif"],
+      ['Merriweather',"'Merriweather', serif"],
+      ['Source Serif 4',"'Source Serif 4', serif"],
+      ['Inter',"'Inter', sans-serif"],
+      ['Nunito',"'Nunito', sans-serif"],
+      ['DM Sans',"'DM Sans', sans-serif"],
+      ['Playfair Display',"'Playfair Display', serif"],
+      ['JetBrains Mono',"'JetBrains Mono', monospace"],
+      ['OpenDyslexic',"'OpenDyslexic', sans-serif"]
+    ];
+    const SHORTCUTS = [
+      ['Ctrl + F','Open search'],['Ctrl + B','Add bookmark'],['Ctrl + D','Toggle dark/light mode'],
+      ['Ctrl + +','Increase font size'],['Ctrl + -','Decrease font size'],
+      ['F11 / Ctrl + Shift + F','Fullscreen'],['Z','Toggle focus mode'],['ArrowUp / ArrowDown','Scroll by one line'],
+      ['PageUp / PageDown','Jump page blocks'],['Escape','Close panel'],['?','Show shortcuts']
+    ];
+    const state = {
+      library: loadJSON(STORAGE.library, []),
+      settings: loadJSON(STORAGE.settings, {theme:'paper',autoTheme:true,customBg:'#FAFAF8',customFg:'#1a1a1a',customAccent:'#C8602A',font:"'Crimson Pro', serif",fontSize:18,lineHeight:1.7,letterSpacing:0,wordSpacing:0,paragraphSpacing:18,readingWidth:680,columns:false}),
+      stats: loadJSON(STORAGE.stats, {lastOpenDate:'',streak:0,pagesReadToday:0}),
+      activeBook:null, currentPages:[], bookmarks:[], highlights:[], searchBackup:null,
+      search:{query:'',matches:[],index:-1}, pendingSelection:null, dictAbort:null,
+      sessionStart:Date.now(), tts:{utterance:null,voices:[],baseHtml:null}, autoSaveTimer:null, memoryBooks:new Map(), selectionTimer:null, selectionSeq:0, scrollRaf:null,
+      libraryFilter:{query:'',sort:'recent'}
+    };
+    const el = { settingsBtn:$('#settingsBtn'), settingsDrawer:$('#settingsDrawer'), ttsPlayer:$('#ttsPlayer'), progressRing:$('#progressRing'), progressText:$('#progressText'), streakFlame:$('#streakFlame'),
+      landingView:$('#landingView'), readerView:$('#readerView'), libraryGrid:$('#libraryGrid'),
+      fileInput:$('#fileInput'), openFileBtn:$('#openFileBtn'), demoBtn:$('#demoBtn'), clearLib:$('#clearLib'),
+      drop:$('#drop'), loading:$('#loading'), loadingText:$('#loadingText'), backdrop:$('#backdrop'), modback:$('#modback'),
+      searchbar:$('#searchbar'), searchInput:$('#searchInput'), prevMatch:$('#prevMatch'), nextMatch:$('#nextMatch'), closeSearch:$('#closeSearch'), searchCount:$('#searchCount'),
+      popup:$('#popup'), noteRow:$('#noteRow'), noteText:$('#noteText'), addNote:$('#addNote'), lookupSel:$('#lookupSel'), saveNote:$('#saveNote'), copySel:$('#copySel'), citeSel:$('#citeSel'),
+      librarySearch:$('#librarySearch'), librarySort:$('#librarySort'),
+      dict:$('#dict'), dictWord:$('#dictWord'), dictPhonetic:$('#dictPhonetic'), dictBody:$('#dictBody'), closeDictBtn:$('#closeDictBtn'), dictSpeak:$('#dictSpeak'),
+      toastwrap:$('#toastwrap'), focusExit:$('#focusExit'), readerContent:$('#readerContent'), readerEmpty:$('#readerEmpty'),
+      bookTitle:$('#bookTitle'), pageInfo:$('#pageInfo'), progressBar:$('#progressBar'), toolbar:$('#toolbar'),
+      toLibrary:$('#toLibrary'), bookmarkBtn:$('#bookmarkBtn'), highlightsBtn:$('#highlightsBtn'), statsBtn:$('#statsBtn'), searchBtn:$('#searchBtn'),
+      ttsBtn:$('#ttsBtn'), exportBtn:$('#exportBtn'), exportMenu:$('#exportMenu'), exportNotesBtn:$('#exportNotesBtn'), printBtn:$('#printBtn'), helpBtn:$('#helpBtn'), helpClose:$('#helpClose'), focusToggle:$('#focusToggle'),
+      focusBtn:$('#focusBtn'), helpToolbarBtn:$('#helpToolbarBtn'), skipLink:$('#skipLink'),
+      nightModeBtn:$('#nightModeBtn'),
+      themeSelect:$('#themeSelect'), bgColor:$('#bgColor'), fgColor:$('#fgColor'), accentColor:$('#accentColor'), fontSelect:$('#fontSelect'),
+      jumpPage:$('#jumpPage'), columnsToggle:$('#columnsToggle'),
+      fontSize:$('#fontSize'), lineHeight:$('#lineHeight'), letterSpacing:$('#letterSpacing'), wordSpacing:$('#wordSpacing'), paraSpacing:$('#paraSpacing'), readingWidth:$('#readingWidth'),
+      fontSizeVal:$('#fontSizeVal'), lineHeightVal:$('#lineHeightVal'), letterSpacingVal:$('#letterSpacingVal'), wordSpacingVal:$('#wordSpacingVal'), paraSpacingVal:$('#paraSpacingVal'), readingWidthVal:$('#readingWidthVal'),
+      voiceSelect:$('#voiceSelect'), ttsRate:$('#ttsRate'), ttsPlay:$('#ttsPlay'), ttsStop:$('#ttsStop'),
+      bookmarksDrawer:$('#bookmarksDrawer'), highlightsDrawer:$('#highlightsDrawer'), statsDrawer:$('#statsDrawer'),
+      bookmarksList:$('#bookmarksList'), highlightsList:$('#highlightsList'), statsGrid:$('#statsGrid'),
+      helpModal:$('#helpModal'), helpGrid:$('#helpGrid')
+    };
+    function loadJSON(key, fallback){ try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }catch{ return fallback; } }
+    function isQuotaError(err){
+      return !!err && (err.name === 'QuotaExceededError' || err.name === 'NS_ERROR_DOM_QUOTA_REACHED' || err.code === 22 || err.code === 1014);
+    }
+    let quotaBannerShown = false;
+    function saveJSON(key, value){
+      try{
+        localStorage.setItem(key, JSON.stringify(value));
+        return true;
+      }catch(err){
+        if(isQuotaError(err)){
+          if(!quotaBannerShown){
+            quotaBannerShown = true;
+            showPersistBanner('Browser storage is full. Recent changes may not be saved. Export a library backup to keep your data safe.');
+          }
+          toast('Storage full - changes may not be saved');
+        }else{
+          console.error('saveJSON failed', err);
+          toast('Could not save - storage error');
+        }
+        return false;
+      }
+    }
+    // Persistent, dismissible notice banner (used for non-persistence + quota warnings).
+    function showPersistBanner(msg){
+      let banner = document.getElementById('persistBanner');
+      if(!banner){
+        banner = document.createElement('div');
+        banner.id = 'persistBanner';
+        banner.setAttribute('role', 'alert');
+        banner.style.cssText = 'position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:130;max-width:min(680px,calc(100vw - 16px));display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-radius:14px;background:rgba(28,28,28,.96);color:#fff;border-left:3px solid #E8936A;box-shadow:0 8px 28px rgba(0,0,0,.28);font-family:inherit;font-size:.92rem;line-height:1.45;';
+        document.body.appendChild(banner);
+      }
+      banner.innerHTML = '';
+      const icon = document.createElement('i');
+      icon.className = 'fa-solid fa-triangle-exclamation';
+      icon.style.cssText = 'color:#E8936A;margin-top:2px;flex:0 0 auto;';
+      const text = document.createElement('div');
+      text.style.flex = '1';
+      text.textContent = msg;
+      const close = document.createElement('button');
+      close.className = 'btn secondary icon-only';
+      close.setAttribute('aria-label', 'Dismiss notice');
+      close.style.cssText = 'width:28px;height:28px;min-height:28px;flex:0 0 auto;border-radius:50%;';
+      close.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+      close.addEventListener('click', () => banner.remove());
+      banner.append(icon, text, close);
+    }
+    function escapeHtml(s){ return String(s ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+    function hashString(str){ let h = 5381; for(let i=0;i<str.length;i++) h = ((h<<5)+h) + str.charCodeAt(i); return h >>> 0; }
+    function cover(seed){ const h = hashString(seed) % 360; return { c1:`hsl(${h} 68% 54%)`, c2:`hsl(${(h+32)%360} 64% 40%)` }; }
+    function fileKey(name){ return 'book_reader_file_' + String(name || '').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,''); }
+    function libraryId(name){ return fileKey(name); }
+    function bookKey(book){ return (book && book.id) ? String(book.id) : fileKey(book && book.filename); }
+    function todayKey(){ const d=new Date(), p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; }
+    function yestKey(){ const d=new Date(); d.setDate(d.getDate()-1); const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; }
+    function dailyPagesKey(){ return `book_reader_pages_${todayKey()}`; }
+    function formatTime(ts){ try{ return new Date(ts).toLocaleString([], {dateStyle:'medium', timeStyle:'short'}); }catch{ return new Date(ts).toString(); } }
+    function formatDur(ms){ const s=Math.floor(ms/1000), h=Math.floor(s/3600), m=Math.floor((s%3600)/60), r=s%60; return h ? `${h}h ${m}m ${r}s` : m ? `${m}m ${r}s` : `${r}s`; }
+    function clamp(n,min,max){ return Math.min(max, Math.max(min, n)); }
+    function hasSpeechSupport(){ return typeof window !== 'undefined' && 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window; }
+    function hasPdfSupport(){ return typeof window !== 'undefined' && typeof window.pdfjsLib !== 'undefined'; }
+    function hasEpubSupport(){ return typeof window !== 'undefined' && typeof window.ePub === 'function'; }
+    function toast(msg){ const d=document.createElement('div'); d.className='toast'; d.textContent=msg; el.toastwrap.appendChild(d); d.addEventListener('animationend', ()=>d.remove(), {once:true}); }
+    function showLoading(text='Parsing book...'){ el.loadingText.textContent = text; el.loading.classList.add('on'); }
+    function hideLoading(){ el.loading.classList.remove('on'); }
+    function applyTheme(name){
+      const t = THEMES[name] || THEMES.paper;
+      const r = document.documentElement.style;
+      r.setProperty('--page-bg', t.pageBg || t.bg);
+      r.setProperty('--page-fg', t.fg);
+      r.setProperty('--page-accent', t.accent);
+      r.setProperty('--bg', t.bg);
+      r.setProperty('--fg', t.fg);
+      r.setProperty('--panel', t.panel);
+      r.setProperty('--texture-opacity', t.texture);
+      state.settings.theme = name;
+      el.themeSelect.value = name;
+      syncColorPickers();
+      saveJSON(STORAGE.settings, state.settings);
+    }
+    function applyCustomColors(){
+      const hexToRgba = (hex, a) => {
+        const h = String(hex || '').replace('#','');
+        const full = h.length === 3 ? h.split('').map(c=>c+c).join('') : h;
+        const n = parseInt(full, 16);
+        if(full.length !== 6 || Number.isNaN(n)) return `rgba(255,255,255,${a})`;
+        return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
+      };
+      const r = document.documentElement.style;
+      const bg = state.settings.customBg, fg = state.settings.customFg;
+      r.setProperty('--page-bg', bg);
+      r.setProperty('--page-fg', fg);
+      r.setProperty('--page-accent', state.settings.customAccent || '#C8602A');
+      r.setProperty('--bg', bg);
+      r.setProperty('--fg', fg);
+      r.setProperty('--panel', hexToRgba(bg, 0.86));
+      state.settings.theme = 'custom';
+      el.themeSelect.value = 'custom';
+      syncColorPickers();
+      saveJSON(STORAGE.settings, state.settings);
+    }
+    function applyTypography(){
+      const s = state.settings;
+      document.documentElement.style.setProperty('--reader-font', s.font);
+      document.documentElement.style.setProperty('--font-size', s.fontSize + 'px');
+      document.documentElement.style.setProperty('--line-height', s.lineHeight);
+      document.documentElement.style.setProperty('--letter-spacing', s.letterSpacing + 'px');
+      document.documentElement.style.setProperty('--word-spacing', s.wordSpacing + 'px');
+      document.documentElement.style.setProperty('--paragraph-spacing', s.paragraphSpacing + 'px');
+      document.documentElement.style.setProperty('--reading-width', s.readingWidth + 'px');
+      el.fontSize.value = s.fontSize; el.lineHeight.value = s.lineHeight; el.letterSpacing.value = s.letterSpacing; el.wordSpacing.value = s.wordSpacing; el.paraSpacing.value = s.paragraphSpacing; el.readingWidth.value = s.readingWidth;
+      el.fontSizeVal.textContent = s.fontSize + 'px'; el.lineHeightVal.textContent = s.lineHeight; el.letterSpacingVal.textContent = s.letterSpacing + 'px'; el.wordSpacingVal.textContent = s.wordSpacing + 'px'; el.paraSpacingVal.textContent = s.paragraphSpacing + 'px'; el.readingWidthVal.textContent = s.readingWidth + 'px';
+      el.columnsToggle.checked = !!s.columns; el.readerContent.classList.toggle('columns2', !!s.columns);
+      saveJSON(STORAGE.settings, state.settings);
+    }
+    function pruneDailyPagesKeys(){
+      // Keep today + the last 2 days; remove older book_reader_pages_* keys.
+      const keep = new Set();
+      for(let i=0;i<3;i++){ const d=new Date(); d.setDate(d.getDate()-i); const p=n=>String(n).padStart(2,'0'); keep.add(`book_reader_pages_${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`); }
+      try{
+        const stale = [];
+        for(let i=0;i<localStorage.length;i++){ const k = localStorage.key(i); if(k && /^book_reader_pages_\d{4}-\d{2}-\d{2}$/.test(k) && !keep.has(k)) stale.push(k); }
+        stale.forEach(k => { try{ localStorage.removeItem(k); }catch{} });
+      }catch{}
+    }
+    function dateKeyDaysAgo(n){
+      const d = new Date(); d.setDate(d.getDate() - n);
+      const p = x => String(x).padStart(2,'0');
+      return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+    }
+    function setStreak(){
+      pruneDailyPagesKeys();
+      const t = todayKey(), last = state.stats.lastOpenDate;
+      state.stats.pagesReadToday = loadJSON(dailyPagesKey(), []).length;
+      if(last !== t){
+        // 1-day grace: continue the streak if the reader was here yesterday OR the
+        // day before (one missed day is forgiven). Reset only after a longer gap.
+        const continues = last === yestKey() || last === dateKeyDaysAgo(2);
+        state.stats.streak = continues ? (state.stats.streak || 0) + 1 : 1;
+        state.stats.lastOpenDate = t;
+        saveJSON(STORAGE.stats, state.stats);
+      }else{ saveJSON(STORAGE.stats, state.stats); }
+    }
+    function populateFonts(){
+      el.fontSelect.innerHTML = FONT_OPTIONS.map(([label,value]) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`).join('');
+      [...el.fontSelect.options].forEach((o,i)=>o.style.fontFamily = FONT_OPTIONS[i][1]);
+      el.fontSelect.value = state.settings.font;
+    }
+    function populateVoices(){
+      if(!hasSpeechSupport()){
+        el.voiceSelect.innerHTML = '<option value="">TTS unavailable</option>';
+        return;
+      }
+      const voices = speechSynthesis.getVoices();
+      state.tts.voices = voices;
+      const selected = el.voiceSelect.value;
+      if(!voices.length){
+        el.voiceSelect.innerHTML = '<option value="">System voice loading...</option>';
+        return;
+      }
+      el.voiceSelect.innerHTML = voices.map((v,i)=>`<option value="${i}">${escapeHtml(v.name)}${v.lang ? ` (${v.lang})` : ''}</option>`).join('');
+      if(selected) el.voiceSelect.value = selected;
+    }
+    function setMode(on){
+      document.body.classList.toggle('focus', on);
+      el.focusToggle.checked = on;
+      if(el.focusBtn){ el.focusBtn.setAttribute('aria-pressed', String(!!on)); el.focusBtn.title = on ? 'Exit Focus Mode' : 'Focus Mode'; }
+      if(on){ el.focusExit.style.opacity = '1'; el.focusExit.style.pointerEvents = 'auto'; }
+    }
+    function toggleFocusMode(){ setMode(!document.body.classList.contains('focus')); }
+
+    // ---- Focus trap + accessible overlay management ----------------------
+    const OVERLAY_MAP = () => ({ bookmarks:el.bookmarksDrawer, highlights:el.highlightsDrawer, stats:el.statsDrawer, help:el.helpModal, settings:el.settingsDrawer });
+    // Toolbar buttons whose aria-expanded must mirror their overlay's open state.
+    const OVERLAY_TRIGGERS = () => ({ bookmarks:el.bookmarkBtn, highlights:el.highlightsBtn, stats:el.statsBtn, help:el.helpToolbarBtn, settings:el.settingsBtn });
+    const focusTrap = { panel:null, returnTo:null, handler:null };
+    function focusableWithin(panel){
+      return [...panel.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')]
+        .filter(n => !n.disabled && n.offsetParent !== null && n.getAttribute('aria-hidden') !== 'true');
+    }
+    function setBackgroundInert(on){
+      // Mark the primary page regions inert so screen readers / Tab skip them while a dialog is open.
+      [el.landingView, el.readerView].forEach(node => {
+        if(!node) return;
+        if(on) node.setAttribute('inert', '');
+        else node.removeAttribute('inert');
+      });
+    }
+    function trapFocus(panel){
+      releaseFocusTrap();
+      focusTrap.panel = panel;
+      focusTrap.returnTo = document.activeElement;
+      setBackgroundInert(true);
+      // Move focus to the first focusable control, falling back to the heading.
+      const heading = panel.querySelector('h3');
+      const target = focusableWithin(panel)[0] || heading || panel;
+      if(target){
+        if(target === heading && !heading.hasAttribute('tabindex')) heading.setAttribute('tabindex', '-1');
+        try{ target.focus(); }catch{}
+      }
+      focusTrap.handler = e => {
+        if(e.key !== 'Tab') return;
+        const items = focusableWithin(panel);
+        if(!items.length){ e.preventDefault(); return; }
+        const firstEl = items[0], lastEl = items[items.length - 1];
+        if(e.shiftKey && document.activeElement === firstEl){ e.preventDefault(); lastEl.focus(); }
+        else if(!e.shiftKey && document.activeElement === lastEl){ e.preventDefault(); firstEl.focus(); }
+        else if(!panel.contains(document.activeElement)){ e.preventDefault(); firstEl.focus(); }
+      };
+      document.addEventListener('keydown', focusTrap.handler, true);
+    }
+    function releaseFocusTrap(){
+      if(focusTrap.handler) document.removeEventListener('keydown', focusTrap.handler, true);
+      setBackgroundInert(false);
+      const back = focusTrap.returnTo;
+      focusTrap.panel = null; focusTrap.handler = null; focusTrap.returnTo = null;
+      if(back && typeof back.focus === 'function' && document.contains(back)){ try{ back.focus(); }catch{} }
+    }
+    function syncOverlayTriggers(){
+      const triggers = OVERLAY_TRIGGERS(), map = OVERLAY_MAP();
+      Object.keys(triggers).forEach(kind => {
+        const btn = triggers[kind], panel = map[kind];
+        if(btn && panel) btn.setAttribute('aria-expanded', String(panel.classList.contains('on')));
+      });
+    }
+    function openOverlay(kind){
+      closeSearch();
+      hidePopup();
+      closeDict();
+      el.exportMenu.classList.remove('on');
+      const map = OVERLAY_MAP();
+      Object.values(map).forEach(n => n.classList.remove('on'));
+      el.backdrop.classList.remove('on'); el.modback.classList.remove('on');
+      if(kind && map[kind]){
+        map[kind].classList.add('on');
+        (kind === 'help' ? el.modback : el.backdrop).classList.add('on');
+        pushHistoryState();
+        trapFocus(map[kind]);
+      }
+      syncOverlayTriggers();
+    }
+    function anyOverlayOpen(){ return Object.values(OVERLAY_MAP()).some(n => n.classList.contains('on')); }
+    function closeAllOverlays(){
+      const hadOverlay = anyOverlayOpen();
+      closeSearch();
+      hidePopup();
+      closeDict();
+      el.exportMenu.classList.remove('on');
+      [el.bookmarksDrawer,el.highlightsDrawer,el.statsDrawer,el.settingsDrawer,el.helpModal].forEach(n => n.classList.remove('on'));
+      [el.backdrop,el.modback].forEach(n => n.classList.remove('on'));
+      el.noteRow.classList.add('hidden');
+      syncOverlayTriggers();
+      if(hadOverlay) releaseFocusTrap();
+    }
+
+    // ---- History API: make the browser Back button behave intuitively ----
+    function pushHistoryState(){
+      // Add a stack entry so the next Back press is caught by our popstate handler
+      // instead of leaving the site.
+      try{ history.pushState({ reader:true, ts:Date.now() }, ''); }catch{}
+    }
+    function handlePopState(){
+      // Priority: close topmost overlay -> exit focus mode -> return to library.
+      if(anyOverlayOpen() || el.searchbar.classList.contains('on') || el.dict.classList.contains('on') || el.popup.classList.contains('on')){
+        closeAllOverlays();
+        pushHistoryState();
+        return;
+      }
+      if(document.body.classList.contains('focus')){
+        setMode(false);
+        pushHistoryState();
+        return;
+      }
+      if(!el.readerView.classList.contains('hidden')){
+        showLanding();
+        return;
+      }
+      // Already at the landing view with nothing open: allow the browser to leave.
+    }
+    function renderHelp(){ el.helpGrid.innerHTML = SHORTCUTS.map(([k,v]) => `<div class="key"><kbd>${escapeHtml(k)}</kbd><span>${escapeHtml(v)}</span></div>`).join(''); }
+    function osPrefersDark(){
+      return typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    function applyAutoTheme(){
+      // Follow the OS colour scheme. Respects an explicit user choice: this only
+      // runs while state.settings.autoTheme is true (it is turned off the moment
+      // the user picks a theme from the dropdown or a colour picker).
+      if(!state.settings.autoTheme) return;
+      const wantDark = osPrefersDark();
+      const isDark = state.settings.theme === 'night' || state.settings.theme === 'amoled' || state.settings.theme === 'ocean';
+      if(wantDark && !isDark){ applyTheme('night'); state.settings.autoTheme = true; saveJSON(STORAGE.settings, state.settings); }
+      else if(!wantDark && isDark){ applyTheme('paper'); state.settings.autoTheme = true; saveJSON(STORAGE.settings, state.settings); }
+    }
+    function bookIsOpenable(book){
+      // Book content now lives in async IndexedDB, so it cannot be probed
+      // synchronously during render. Use the library record's persisted flag
+      // (kept in sync by persistBook/updateLibrary) or the in-session cache.
+      const bk = bookKey(book);
+      return !!(book && book.hasPersistedContent) || state.memoryBooks.has(bk)
+        || localStorage.getItem(bk) != null || sessionStorage.getItem(bk) != null;
+    }
+    function bookIsFullySaved(book){
+      // Fully saved means the content survives a browser restart (IndexedDB or
+      // legacy localStorage). hasPersistedContent is set true only for those.
+      return !!(book && book.hasPersistedContent) || localStorage.getItem(bookKey(book)) != null;
+    }
+    function getVisibleLibrary(){
+      const q = (state.libraryFilter.query || '').trim().toLowerCase();
+      const sort = state.libraryFilter.sort || 'recent';
+      let list = state.library.slice();
+      if(q) list = list.filter(b => ((b.title||'') + ' ' + (b.filename||'')).toLowerCase().includes(q));
+      if(sort === 'title') list.sort((a,b)=> (a.title||a.filename||'').localeCompare(b.title||b.filename||'', undefined, {sensitivity:'base'}));
+      else if(sort === 'progress') list.sort((a,b)=> (clamp(b.progress||0,0,100)) - (clamp(a.progress||0,0,100)));
+      else list.sort((a,b)=> (b.lastOpenAt||0)-(a.lastOpenAt||0));
+      return list;
+    }
+    function renderLibrary(){
+      const controls = $('#libraryControls');
+      if(!state.library.length){
+        if(controls) controls.classList.add('hidden');
+        el.libraryGrid.innerHTML = `<div class="readerempty" style="grid-column:1/-1;margin:0"><svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg><h2 style="margin:16px 0 6px;font-family:'Playfair Display'">Your shelf awaits</h2><p style="margin:0;color:var(--muted)">Upload your first file to create a local shelf.</p></div>`;
+        return;
+      }
+      if(controls) controls.classList.remove('hidden');
+      const list = getVisibleLibrary();
+      if(!list.length){
+        el.libraryGrid.innerHTML = `<div class="readerempty" style="grid-column:1/-1;margin:0"><i class="fa-solid fa-magnifying-glass"></i><h2 style="margin:16px 0 6px;font-family:'Playfair Display'">No matches</h2><p style="margin:0;color:var(--muted)">No books match "${escapeHtml(state.libraryFilter.query)}".</p></div>`;
+        return;
+      }
+      el.libraryGrid.innerHTML = list.map(book => {
+        const c = cover(book.filename || book.title || 'book');
+        const p = clamp(book.progress || 0, 0, 100).toFixed(0);
+        const openable = bookIsOpenable(book);
+        const saved = bookIsFullySaved(book);
+        const badgeBase = 'display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:.72rem;font-weight:700;line-height:1.6;';
+        const badge = saved
+          ? `<span class="store-badge" style="${badgeBase}background:rgba(46,160,67,.14);color:#2ea043" title="Saved on this device — survives a browser restart"><i class="fa-solid fa-circle-check"></i> Saved</span>`
+          : (openable
+            ? `<span class="store-badge" style="${badgeBase}background:rgba(200,96,42,.14);color:var(--accent)" title="Available this session only — may be lost when you close the browser"><i class="fa-regular fa-clock"></i> Session only</span>`
+            : `<span class="store-badge" style="${badgeBase}background:rgba(180,40,40,.14);color:#b42828" title="Content was cleared from storage — re-upload the file to read it"><i class="fa-solid fa-triangle-exclamation"></i> Re-upload needed</span>`);
+        return `<article class="librarycard"><div class="cover-spine" style="background:linear-gradient(180deg, ${c.c1}, ${c.c2})"></div><div class="card-letter">${escapeHtml((book.title || book.filename || '?').trim().charAt(0).toUpperCase())}</div><div class="body"><h3 title="${escapeHtml(book.title || book.filename || '')}">${escapeHtml(book.title || book.filename || 'Untitled')}</h3><div class="meta"><span>${escapeHtml(book.filename || '')}</span><span>Added ${escapeHtml(book.addedAtLabel || formatTime(book.addedAt || Date.now()))}</span>${badge}</div><div class="bar"><span style="width:${p}%"></span></div><div class="meta">${p}% read${book.lastPage ? ` - page ${book.lastPage}` : ''}</div><div class="actions">${openable ? `<button class="btn" data-open-book="${escapeHtml(book.id)}">Continue Reading</button>` : `<button class="btn" data-reupload-book="${escapeHtml(book.id)}"><i class="fa-solid fa-upload"></i> Re-upload File</button>`}<button class="btn secondary" data-remove-book="${escapeHtml(book.id)}"><i class="fa-solid fa-trash"></i></button></div></div></article>`;
+      }).join('');
+    }
+    function toLibraryRecord(book){
+      return { id:book.id, size:book.size, title:book.title, filename:book.filename, type:book.type, addedAt:book.addedAt || Date.now(), addedAtLabel:book.addedAtLabel || formatTime(book.addedAt || Date.now()), lastOpenAt:Date.now(), lastPage:book.lastPage || 1, lastScroll:book.lastScroll || 0, progress:book.progress || 0, hasPersistedContent:!!book.hasPersistedContent };
+    }
+    function updateLibrary(book){
+      const record = toLibraryRecord(book);
+      const i = state.library.findIndex(x => x.id === record.id);
+      i >= 0 ? state.library[i] = { ...state.library[i], ...record } : state.library.unshift(record);
+      saveJSON(STORAGE.library, state.library); renderLibrary();
+    }
+    function splitText(text, perPage=500){
+      const paras = String(text || '').replace(/\r\n/g,'\n').replace(/\r/g,'\n').trim().split(/\n{2,}/).map(p=>p.trim()).filter(Boolean);
+      const pages=[]; let bucket=[], count=0;
+      const push = () => { if(!bucket.length) return; const txt = bucket.join('\n\n'); pages.push({ html: bucket.map(p => `<p>${escapeHtml(p).replace(/\n/g,'<br>')}</p>`).join(''), text: txt, words: txt.split(/\s+/).filter(Boolean).length }); bucket=[]; count=0; };
+      for(const para of paras){
+        const words = para.split(/\s+/).filter(Boolean);
+        if(words.length > perPage){ push(); for(let i=0;i<words.length;i+=perPage){ const slice = words.slice(i,i+perPage).join(' '); pages.push({ html:`<p>${escapeHtml(slice)}</p>`, text:slice, words:slice.split(/\s+/).filter(Boolean).length }); } continue; }
+        if(count + words.length > perPage) push();
+        bucket.push(para); count += words.length;
+      }
+      push();
+      return pages.length ? pages : [{ html:'<p>(empty document)</p>', text:'', words:0 }];
+    }
+    function sanitizeHtmlRoot(root){
+      if(!root) return root;
+      // Drop elements that can execute code, load remote resources, or hijack the page.
+      // svg/math are foreign-content namespaces: they can carry <script>, animation
+      // elements and namespaced handlers that the attribute scrub may miss, so they
+      // are removed entirely rather than relying on attribute-level cleaning.
+      root.querySelectorAll('script,iframe,frame,frameset,object,embed,link,meta,base,style,svg,math').forEach(n => n.remove());
+      // Scrub dangerous attributes from everything that remains.
+      root.querySelectorAll('*').forEach(node => {
+        [...node.attributes].forEach(attr => {
+          const name = attr.name.toLowerCase();
+          const value = (attr.value || '').replace(/[\u0000-\u0020]+/g, '').toLowerCase();
+          const isUrlAttr = /^(href|xlink:href|src|action|formaction|data|background|poster|srcdoc)$/.test(name);
+          if(name.startsWith('on')) node.removeAttribute(attr.name);              // inline event handlers
+          else if(name === 'srcdoc') node.removeAttribute(attr.name);             // iframe srcdoc payloads
+          else if(name === 'style') node.removeAttribute(attr.name);              // inline CSS can spoof/redress the UI (e.g. fixed overlays)
+          else if(isUrlAttr && /^(javascript|vbscript|data):/.test(value) && !/^data:image\//.test(value)) node.removeAttribute(attr.name);
+        });
+      });
+      return root;
+    }
+    function stripHtml(raw){
+      const doc = new DOMParser().parseFromString(raw, 'text/html');
+      sanitizeHtmlRoot(doc.body);
+      return { html: doc.body.innerHTML || '<p>(empty document)</p>', text: (doc.body.textContent || '').trim() };
+    }
+    function groupPdf(items){
+      const lines = [];
+      const tol = 2.5;
+      for(const item of items || []){
+        const str = (item.str || '').replace(/\s+/g,' ').trim();
+        if(!str) continue;
+        const x = item.transform?.[4] || 0;
+        const y = item.transform?.[5] || 0;
+        let line = lines.find(l => Math.abs(l.y - y) < tol);
+        if(!line){ line = { y, items:[] }; lines.push(line); }
+        line.items.push({ x, str });
+      }
+      lines.sort((a,b)=>b.y-a.y);
+      return lines.map(line => {
+        line.items.sort((a,b)=>a.x-b.x);
+        let text = '';
+        let last = '';
+        for(const it of line.items){
+          const needsSpace = text && !/^[,.;:!?)]/.test(it.str) && !/[-(\/\[]$/.test(last);
+          text += (needsSpace ? ' ' : '') + it.str;
+          last = it.str.slice(-1);
+        }
+        return { text: text.trim() };
+      });
+    }
+    async function parsePdf(buf){
+      if(!hasPdfSupport()) throw new Error('PDF support is unavailable right now. Reload the page and try again.');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      const loadingTask = pdfjsLib.getDocument({ data: buf, isEvalSupported: false });
+      const pdf = await loadingTask.promise;
+      const pages = [];
+      for(let i=1;i<=pdf.numPages;i++){ const p = await pdf.getPage(i); const content = await p.getTextContent(); const lines = groupPdf(content.items); const text = lines.map(l=>l.text).join('\n'); pages.push({ html: lines.map(l => `<p>${escapeHtml(l.text)}</p>`).join('') || '<p>(blank page)</p>', text, words:text.split(/\s+/).filter(Boolean).length, pageNumber:i }); }
+      return pages;
+    }
+    async function parseEpub(buf){
+      if(!hasEpubSupport()) throw new Error('EPUB support is unavailable right now. Reload the page and try again.');
+      const book = ePub(buf);
+      await book.ready;
+      const spine = book.spine;
+      const pages = [];
+      for(const item of spine.items){
+        try{
+          const doc = await book.load(item.href);
+          const parsed = stripHtml(typeof doc === 'string' ? doc : doc?.documentElement?.outerHTML || '');
+          splitText(parsed.text || '', 500).forEach(chunk => pages.push(chunk));
+        }catch(e){}
+      }
+      if(!pages.length) pages.push({ html:'<p>(Could not parse EPUB content)</p>', text:'', words:0 });
+      return pages;
+    }
+    async function parseFile(file){
+      // Pre-parse size check: very large files are slow to parse and likely too big to persist.
+      const LARGE_FILE_BYTES = 35 * 1024 * 1024;
+      if(file && file.size > LARGE_FILE_BYTES){
+        const mb = (file.size / (1024 * 1024)).toFixed(1);
+        if(!confirm(`This file is ${mb} MB. Large files may be slow to open and might not save to your library (browser storage limit). Continue anyway?`)){
+          throw new Error('Import cancelled');
+        }
+      }
+      const ext = (file.name.split('.').pop() || '').toLowerCase();
+      const meta = { id:libraryId(file.name) + '_s' + (file.size || 0), size:file.size || 0, title:file.name.replace(/\.[^.]+$/,''), filename:file.name, type:ext.toUpperCase(), addedAt:Date.now(), addedAtLabel:formatTime(Date.now()), hasPersistedContent:false };
+      showLoading(`Parsing ${meta.type} book...`);
+      let pages = [], fullText = '';
+      if(ext === 'txt'){ fullText = String(await file.text()); pages = splitText(fullText, 500); }
+      else if(ext === 'html' || ext === 'htm'){ const parsed = stripHtml(await file.text()); pages = [{ html:parsed.html, text:parsed.text, words:parsed.text.split(/\s+/).filter(Boolean).length }]; fullText = parsed.text; }
+      else if(ext === 'pdf'){ pages = await parsePdf(await file.arrayBuffer()); fullText = pages.map(p=>p.text).join('\n\n'); }
+      else if(ext === 'epub'){ pages = await parseEpub(await file.arrayBuffer()); fullText = pages.map(p=>p.text).join('\n\n'); }
+      else throw new Error('Unsupported file type');
+      const book = { ...meta, pages, fullText, totalWords: fullText.split(/\s+/).filter(Boolean).length, totalPages: pages.length };
+      await persistBook(book);
+      return book;
+    }
+    function cloneBook(book){
+      try{ return JSON.parse(JSON.stringify(book)); }catch{ return book; }
+    }
+    async function persistBook(book){
+      const key = bookKey(book);
+      const payload = { ...book, hasPersistedContent:true };
+      // Fast in-session cache: always available even if every store fails.
+      state.memoryBooks.set(key, cloneBook(payload));
+      let savedToIdb = false, savedToLocal = false, savedToSession = false;
+      try{ await idbPutBook(key, cloneBook(payload)); savedToIdb = true; }
+      catch{
+        // IndexedDB unavailable/failed: fall back to the legacy storage chain
+        // so large-but-not-huge books still persist as before.
+        const data = JSON.stringify(payload);
+        try{ localStorage.setItem(key, data); savedToLocal = true; }
+        catch{ try{ sessionStorage.setItem(key, data); savedToSession = true; }catch{} }
+      }
+      // IndexedDB and localStorage survive a tab close; sessionStorage/memory do not.
+      const persisted = savedToIdb || savedToLocal;
+      book.hasPersistedContent = persisted;
+      updateLibrary(book);
+      if(persisted){
+        toast(`Saved ${book.title} to the library`);
+      }else{
+        const where = savedToSession ? 'only for this browser tab' : 'only in memory';
+        toast(`Loaded ${book.title}. It will not persist.`);
+        showPersistBanner(`"${book.title || book.filename || 'This book'}" could not be saved to permanent storage and is kept ${where}. It will be lost when you close the tab. Use Export Library (backup) to keep a copy.`);
+      }
+    }
+    async function loadPersisted(book){
+      const key = bookKey(book);
+      // 1. In-session cache: synchronous hit, return immediately.
+      const cached = state.memoryBooks.get(key);
+      if(cached) return cloneBook(cached);
+      // 2. IndexedDB: where book content now lives.
+      try{
+        const fromIdb = await idbGetBook(key);
+        if(fromIdb){ state.memoryBooks.set(key, cloneBook(fromIdb)); return cloneBook(fromIdb); }
+      }catch{}
+      // 3. Legacy localStorage/sessionStorage (books saved by older versions).
+      let legacy = null, legacyStore = null;
+      try{ const raw = localStorage.getItem(key); if(raw){ legacy = JSON.parse(raw); legacyStore = localStorage; } }catch{}
+      if(!legacy){
+        try{ const raw = sessionStorage.getItem(key); if(raw){ legacy = JSON.parse(raw); legacyStore = sessionStorage; } }catch{}
+      }
+      if(legacy){
+        state.memoryBooks.set(key, cloneBook(legacy));
+        // Opportunistically migrate to IndexedDB and drop the bulky legacy key.
+        try{
+          await idbPutBook(key, cloneBook(legacy));
+          try{ legacyStore.removeItem(key); }catch{}
+        }catch{}
+        return cloneBook(legacy);
+      }
+      return null;
+    }
+    async function clearPersistedBookData(book){
+      const key = bookKey(book);
+      if(!key) return;
+      [localStorage, sessionStorage].forEach(store => {
+        try{ store.removeItem(key); }catch{}
+        try{ store.removeItem(key + '_resume'); }catch{}
+        try{ store.removeItem(key + '_bookmarks'); }catch{}
+        try{ store.removeItem(key + '_highlights'); }catch{}
+      });
+      state.memoryBooks.delete(key);
+      try{ await idbDeleteBook(key); }catch{}
+    }
+    function saveCurrentPosition(){
+      if(!state.activeBook) return;
+      // The demo book is never persisted to the library.
+      if(state.activeBook.id === libraryId('demo.txt')) return;
+      const page = getCurrentPage() + 1;
+      const scroll = Math.round(window.scrollY);
+      // Skip redundant work: the position has not moved since the last save.
+      if(state.lastSavedScroll === scroll && state.lastSavedPage === page) return;
+      const progress = clamp(scroll / Math.max(1, document.documentElement.scrollHeight - innerHeight) * 100, 0, 100);
+      const resume = JSON.stringify({ scroll, page, progress, time: Date.now() });
+      const resumeKey = bookKey(state.activeBook) + '_resume';
+      try{ localStorage.setItem(resumeKey, resume); }catch{}
+      try{ sessionStorage.setItem(resumeKey, resume); }catch{}
+      state.activeBook.lastPage = page; state.activeBook.lastScroll = scroll; state.activeBook.progress = progress;
+      state.lastSavedScroll = scroll; state.lastSavedPage = page;
+      updateLibrary(state.activeBook);
+    }
+    function restoreResume(){
+      if(!state.activeBook) return;
+      // A different book is now active: reset the save-dedup markers so the first
+      // saveCurrentPosition for this book is never skipped as a no-op.
+      state.lastSavedScroll = null; state.lastSavedPage = null;
+      const key = bookKey(state.activeBook) + '_resume';
+      const raw = localStorage.getItem(key) || sessionStorage.getItem(key);
+      if(!raw) return;
+      try{
+        const r = JSON.parse(raw);
+        const total = pageEls().length;
+        // Prefer layout-independent restore by page number.
+        if(typeof r.page === 'number' && r.page >= 1 && total){
+          scrollToPage(clamp(r.page, 1, total));
+          toast(`Welcome back! Resuming from page ${r.page}`);
+        }else if(typeof r.progress === 'number'){
+          // Fall back to fractional progress restored proportionally.
+          const max = Math.max(1, document.documentElement.scrollHeight - innerHeight);
+          window.scrollTo({ top: clamp(r.progress, 0, 100) / 100 * max, behavior:'auto' });
+          toast(`Welcome back! Resuming where you left off`);
+        }else if(typeof r.scroll === 'number'){
+          // Legacy resume data: absolute scroll pixel.
+          window.scrollTo({ top:r.scroll, behavior:'auto' });
+          toast(`Welcome back! Resuming from page ${r.page || 1}`);
+        }
+      }catch{}
+    }
+    function showLanding(){ saveCurrentPosition(); stopSpeech(); closeAllOverlays(); setMode(false); el.landingView.classList.remove('hidden'); el.readerView.classList.add('hidden'); renderLibrary(); }
+    function showReader(){ el.landingView.classList.add('hidden'); el.readerView.classList.remove('hidden'); window.scrollTo({ top:0, behavior:'auto' }); }
+    function pageEls(){ return [...el.readerContent.querySelectorAll('.page')]; }
+    let pageOffsetCache = null;
+    function buildPageOffsetCache(){
+      const pages = pageEls();
+      pageOffsetCache = { first: pages[0] || null, count: pages.length, height: document.documentElement.scrollHeight, tops: pages.map(p => p.getBoundingClientRect().top + scrollY) };
+      return pageOffsetCache;
+    }
+    function getPageOffsets(){
+      const current = pageEls();
+      // rebuild when pages were re-rendered (count/identity changed) or layout height changed (font/columns/resize)
+      if(!pageOffsetCache || pageOffsetCache.count !== current.length || pageOffsetCache.first !== (current[0] || null) || pageOffsetCache.height !== document.documentElement.scrollHeight) return buildPageOffsetCache();
+      return pageOffsetCache;
+    }
+    function invalidatePageOffsetCache(){ pageOffsetCache = null; }
+    window.addEventListener('resize', invalidatePageOffsetCache, { passive:true });
+    function getCurrentPage(){
+      const cache = getPageOffsets();
+      const tops = cache.tops;
+      if(!tops.length) return 0;
+      const mid = window.scrollY + innerHeight * .45;
+      // binary search for the last page whose top is <= mid
+      let lo = 0, hi = tops.length - 1, idx = 0;
+      while(lo <= hi){
+        const m = (lo + hi) >> 1;
+        if(tops[m] <= mid){ idx = m; lo = m + 1; } else hi = m - 1;
+      }
+      // pick the nearer of idx and idx+1
+      if(idx + 1 < tops.length && Math.abs(tops[idx + 1] - mid) < Math.abs(tops[idx] - mid)) idx += 1;
+      return idx;
+    }
+    function scrollToPage(n){
+      const pages = pageEls();
+      if(!pages.length) return;
+      const page = pages[clamp(n - 1, 0, pages.length - 1)];
+      if(page) page.scrollIntoView({ behavior:'smooth', block:'start' });
+    }
+    function updatePageInfo(){ const total = pageEls().length; if(!total) return void (el.pageInfo.textContent = 'Page 0 / 0'); const page = getCurrentPage() + 1; el.pageInfo.textContent = `Page ${page} / ${total}`; }
+    function updateProgress(){ const max = Math.max(1, document.documentElement.scrollHeight - innerHeight); el.progressBar.style.width = clamp(window.scrollY / max * 100, 0, 100) + '%'; updatePageInfo(); renderStats(); }
+    // Run low-priority work when the browser is idle; fall back to a short timeout.
+    function runWhenIdle(fn){
+      if(typeof requestIdleCallback === 'function') requestIdleCallback(fn, { timeout: 1000 });
+      else setTimeout(fn, 200);
+    }
+    function onScroll(){ if(state.scrollRaf) cancelAnimationFrame(state.scrollRaf); state.scrollRaf = requestAnimationFrame(() => { state.scrollRaf = null; state.inScrollFrame = true; try{ updateProgress(); trackStats(); } finally{ state.inScrollFrame = false; } }); }
+    // trackStats only updates an in-memory page set on the scroll hot path; the
+    // localStorage write is debounced and deferred to an idle callback.
+    function trackStats(){
+      if(!state.activeBook) return;
+      const page = getCurrentPage() + 1;
+      const key = state.activeBook.id + ':' + page;
+      if(state.trackedPagesKey !== dailyPagesKey()){
+        // New day (or first call): reload the persisted set once, then keep it in memory.
+        state.trackedPagesKey = dailyPagesKey();
+        state.trackedPages = new Set(loadJSON(dailyPagesKey(), []));
+      }
+      if(state.trackedPages.has(key)) return;
+      state.trackedPages.add(key);
+      state.stats.pagesReadToday = state.trackedPages.size;
+      scheduleStatsPersist();
+    }
+    // Coalesce repeated trackStats writes into a single deferred localStorage flush.
+    function scheduleStatsPersist(){
+      if(state.statsPersistPending) return;
+      state.statsPersistPending = true;
+      runWhenIdle(() => {
+        state.statsPersistPending = false;
+        if(!state.trackedPages || state.trackedPagesKey !== dailyPagesKey()) return;
+        try{
+          saveJSON(state.trackedPagesKey, [...state.trackedPages]);
+          saveJSON(STORAGE.stats, state.stats);
+        }catch{}
+      });
+    }
+    function getWordsRead(){ return state.currentPages.slice(0, getCurrentPage() + 1).reduce((s, p) => s + (p.words || 0), 0); }
+    function renderPages(){
+      const pages = state.currentPages || [];
+      if(!pages.length){ el.readerEmpty.classList.remove('hidden'); el.readerContent.innerHTML = ''; el.pageInfo.textContent = 'Page 0 / 0'; return; }
+      el.readerEmpty.classList.add('hidden');
+      el.readerContent.innerHTML = pages.map((p, i) => `<article class="page" id="page-${i+1}" data-page="${i+1}"><div class="pageinner">${p.html || '<p>(blank page)</p>'}</div><div class="footer">${p.pageNumber || i+1}</div></article>`).join('');
+      [...el.readerContent.querySelectorAll('.page')].forEach(page => page.dataset.baseHtml = page.querySelector('.pageinner').innerHTML);
+      bindPageEvents(); updatePageInfo();
+      if(state.settings.columns) el.readerContent.classList.add('columns2'); else el.readerContent.classList.remove('columns2');
+    }
+    function openBookData(book, triggerToast = true, addToLibrary = true){
+      state.sessionStart = Date.now();
+      state.activeBook = { ...book, hasPersistedContent: !!book.hasPersistedContent };
+      state.currentPages = book.pages || [];
+      const bkey = bookKey(book);
+      state.bookmarks = loadJSON(bkey + '_bookmarks', []);
+      state.highlights = loadJSON(bkey + '_highlights', []);
+      state.search = { query:'', matches:[], index:-1 };
+      state.searchBackup = null;
+      state.memoryBooks.set(bkey, cloneBook(state.activeBook));
+      el.bookTitle.textContent = book.title || book.filename || 'Untitled';
+      if(addToLibrary) updateLibrary(state.activeBook);
+      showReader(); renderPages(); applyTypography(); renderBookmarks(); renderHighlightsList(); renderStats(); restoreFromSavedHighlights(); restoreResume(); updateProgress();
+      if(triggerToast) toast(`Opened ${book.title || book.filename || 'book'}`);
+    }
+    async function openFile(file){
+      if(!file) return;
+      saveCurrentPosition();
+      try{ showLoading(`Parsing ${file.name}...`); const data = await parseFile(file); openBookData(data, true); }
+      catch(err){ console.error(err); toast(err?.message || 'Could not open that file'); }
+      finally{ hideLoading(); el.fileInput.value = ''; }
+    }
+    function renderBookmarks(){
+      if(!state.bookmarks.length){ el.bookmarksList.innerHTML = `<div class="readerempty" style="margin:0"><i class="fa-regular fa-bookmark"></i><h3 style="margin:10px 0 6px">No bookmarks yet</h3><p style="margin:0;color:var(--muted)">Use Ctrl + B to add one.</p></div>`; return; }
+      el.bookmarksList.innerHTML = state.bookmarks.slice().reverse().map((b, i) => `<div class="item"><div><strong>Page ${b.page || 1}</strong><small>${escapeHtml(formatTime(b.time || Date.now()))}</small></div><div class="ops"><button class="btn secondary" data-goto-bookmark="${i}"><i class="fa-solid fa-arrow-right"></i></button><button class="btn secondary" data-del-bookmark="${i}"><i class="fa-solid fa-xmark"></i></button></div></div>`).join('');
+    }
+    function renderHighlightsList(){
+      if(!state.highlights.length){ el.highlightsList.innerHTML = `<div class="readerempty" style="margin:0"><i class="fa-solid fa-highlighter"></i><h3 style="margin:10px 0 6px">No highlights yet</h3><p style="margin:0;color:var(--muted)">Select text to create one.</p></div>`; return; }
+      el.highlightsList.innerHTML = state.highlights.slice().reverse().map((h, i) => `<div class="item"><div style="min-width:0"><strong style="display:flex;align-items:center;gap:8px"><span style="width:12px;height:12px;border-radius:50%;background:${escapeHtml(h.color || '#FFD700')};display:inline-block"></span>Page ${h.page || 1}</strong><small style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:210px">${escapeHtml((h.text || '').slice(0,120))}</small>${h.note ? `<small style="display:block;margin-top:4px">Note: ${escapeHtml(h.note)}</small>` : ''}</div><div class="ops"><button class="btn secondary" data-goto-highlight="${i}"><i class="fa-solid fa-arrow-right"></i></button><button class="btn secondary" data-del-highlight="${i}"><i class="fa-solid fa-xmark"></i></button></div></div>`).join('');
+    }
+    function restoreFromSavedHighlights(){
+      $$('.page').forEach(page => { page.querySelector('.pageinner').innerHTML = page.dataset.baseHtml || page.querySelector('.pageinner').innerHTML; });
+      if(!state.highlights.length){ bindPageEvents(); return; }
+      state.highlights.forEach(h => {
+        const page = el.readerContent.querySelector(`.page[data-page="${h.page}"]`);
+        if(page) restoreHighlightMark(page.querySelector('.pageinner'), h);
+      });
+      bindPageEvents();
+    }
+    function renderStats(){
+      // renderStats runs on every scroll frame via updateProgress; the stats drawer
+      // and progress ring are hidden unless the drawer is open, so skip all of that
+      // DOM work (innerHTML rebuild included) on the scroll hot path when the drawer
+      // is closed. Direct calls (e.g. opening the drawer) always render.
+      if(state.inScrollFrame && !el.statsDrawer?.classList.contains('on')) return;
+      const p = Math.round(clamp(state.activeBook?.progress||0,0,100)); if(el.progressText) el.progressText.textContent=p+'%'; if(el.progressRing) el.progressRing.style.strokeDashoffset = 314 - (314 * p / 100);
+      if(el.streakFlame) el.streakFlame.textContent = state.stats.streak || 0;
+      const totalWords = state.activeBook?.totalWords || 0;
+      const wordsRead = Math.min(totalWords, getWordsRead());
+      const elapsedMs = Date.now() - state.sessionStart;
+      const mins = elapsedMs / 60000;
+      // Require a minimum elapsed time before showing WPM; clamp to a realistic range.
+      const minMins = 0.5;
+      let wpm = 0, wpmReady = false;
+      if(mins >= minMins && wordsRead > 0){ wpm = clamp(Math.round(wordsRead / mins), 50, 1000); wpmReady = true; }
+      const remain = wpmReady && wpm ? Math.max(0, Math.ceil((totalWords - wordsRead) / wpm)) : 0;
+      const cards = [['Session time', formatDur(elapsedMs)], ['Reading speed', wpmReady ? `${wpm} WPM` : 'Calculating…'], ['Estimated time left', wpmReady ? (remain ? `${remain} min` : 'Done') : '—'], ['Pages read today', String(state.stats.pagesReadToday || 0)], ['Reading streak', `${state.stats.streak || 0} days`], ['Current page', `${getCurrentPage() + 1} / ${pageEls().length || 0}`]];
+      el.statsGrid.innerHTML = cards.map(([l, v]) => `<div class="stat"><div class="label">${escapeHtml(l)}</div><div class="value">${escapeHtml(v)}</div></div>`).join('');
+    }
+    function isEditableElement(node = document.activeElement){ return ['INPUT', 'TEXTAREA', 'SELECT'].includes(node?.tagName) || !!node?.isContentEditable; }
+    function getCurrentSelection(){ const sel = window.getSelection(); return sel && typeof sel.rangeCount === 'number' && sel.rangeCount ? sel : null; }
+    function getSelectionPage(sel){
+      if(!sel?.rangeCount) return null;
+      const range = sel.getRangeAt(0);
+      return range.commonAncestorContainer.nodeType === 1 ? range.commonAncestorContainer.closest('.page') : range.commonAncestorContainer.parentElement?.closest('.page');
+    }
+    function normalizeLookupWord(text){
+      const word = String(text || '').trim().replace(/^[^\w'-]+|[^\w'-]+$/g,'');
+      return word && !/\s/.test(word) ? word : '';
+    }
+    function getPendingOrLiveSelection(){
+      const sel = getCurrentSelection();
+      if(sel && !sel.isCollapsed) return sel;
+      if(state.pendingSelection?.range){
+        const range = state.pendingSelection.range.cloneRange();
+        return { isCollapsed:false, rangeCount:1, getRangeAt(){ return range; }, toString(){ return state.pendingSelection?.text || range.toString(); } };
+      }
+      return null;
+    }
+    function openSelectionDictionary(){
+      const sel = getPendingOrLiveSelection();
+      const word = normalizeLookupWord(state.pendingSelection?.text || sel?.toString());
+      if(!sel || !word) return toast('Select a single word to open the dictionary');
+      lookupDict(word, sel);
+    }
+    function onSelectionChange(){
+      if(isEditableElement()) return;
+      const sel = getCurrentSelection();
+      if(!sel || sel.isCollapsed) return;
+      if(getSelectionPage(sel)) scheduleSelectionPopup();
+    }
+    function bindPageEvents(){ el.readerContent.querySelectorAll('.pageinner').forEach(inner => { inner.removeEventListener('mouseup', scheduleSelectionPopup); inner.removeEventListener('touchend', scheduleSelectionPopup); inner.removeEventListener('dblclick', onDoubleClickWord); inner.addEventListener('mouseup', scheduleSelectionPopup); inner.addEventListener('touchend', scheduleSelectionPopup); inner.addEventListener('dblclick', onDoubleClickWord); }); }
+    function positionFloatingPanel(node, left, top){
+      const width = node.offsetWidth || node.getBoundingClientRect().width || 260;
+      const height = node.offsetHeight || node.getBoundingClientRect().height || 0;
+      const minLeft = scrollX + 12;
+      const minTop = scrollY + 12;
+      const maxLeft = Math.max(minLeft, scrollX + innerWidth - width - 12);
+      const maxTop = Math.max(minTop, scrollY + innerHeight - height - 12);
+      node.style.left = clamp(left, minLeft, maxLeft) + 'px';
+      node.style.top = clamp(top, minTop, maxTop) + 'px';
+    }
+    function hidePopup(){ if(state.selectionTimer) clearTimeout(state.selectionTimer); state.selectionTimer = null; state.selectionSeq++; el.popup.classList.remove('on'); el.noteRow.classList.remove('on'); el.noteRow.classList.add('hidden'); state.pendingSelection = null; }
+    function scheduleSelectionPopup(){
+      if(state.selectionTimer) clearTimeout(state.selectionTimer);
+      const seq = ++state.selectionSeq;
+      state.selectionTimer = setTimeout(() => {
+        if(seq !== state.selectionSeq) return;
+        if(isEditableElement()) return hidePopup();
+        const sel = getCurrentSelection();
+        if(!sel || sel.isCollapsed) return hidePopup();
+        const text = sel.toString().trim(); if(!text) return hidePopup();
+        const range = sel.getRangeAt(0);
+        const page = getSelectionPage(sel);
+        if(!page) return hidePopup();
+        const rect = range.getBoundingClientRect(); if(!rect.width && !rect.height) return hidePopup();
+        state.pendingSelection = { text, range, page };
+        el.popup.classList.add('on');
+        positionFloatingPanel(el.popup, rect.left + scrollX + (rect.width / 2) - (el.popup.offsetWidth / 2), rect.top + scrollY - el.popup.offsetHeight - 12);
+        el.noteRow.classList.remove('on');
+        el.noteRow.classList.add('hidden');
+      }, 0);
+    }
+    function wrapFirst(root, term, cls, styles = {}, id = '', note = ''){
+      if(!root || !term) return false;
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      let node;
+      while(node = walker.nextNode()){
+        const idx = node.nodeValue.toLowerCase().indexOf(term.toLowerCase());
+        if(idx < 0) continue;
+        const frag = document.createDocumentFragment(), mark = document.createElement('mark');
+        mark.className = cls; mark.style.cssText = Object.entries(styles).map(([k, v]) => `${k}:${v}`).join(';'); if(id) mark.dataset.id = id; if(note) mark.dataset.note = note;
+        const before = node.nodeValue.slice(0, idx), match = node.nodeValue.slice(idx, idx + term.length), after = node.nodeValue.slice(idx + term.length);
+        if(before) frag.append(before); mark.textContent = match; frag.appendChild(mark); if(after) frag.append(after);
+        node.parentNode.replaceChild(frag, node);
+        return true;
+      }
+      return false;
+    }
+    function getRangeOffsets(root, range){
+      if(!root || !range) return null;
+      const probe = range.cloneRange();
+      probe.selectNodeContents(root);
+      probe.setEnd(range.startContainer, range.startOffset);
+      const start = probe.toString().length;
+      return { start, end:start + range.toString().length };
+    }
+    function createRangeFromOffsets(root, start, end){
+      if(!root || !Number.isFinite(start) || !Number.isFinite(end) || end <= start) return null;
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      let node, offset = 0, startNode = null, endNode = null, startOffset = 0, endOffset = 0;
+      while(node = walker.nextNode()){
+        const nextOffset = offset + node.nodeValue.length;
+        if(!startNode && start <= nextOffset){
+          startNode = node;
+          startOffset = Math.max(0, start - offset);
+        }
+        if(startNode && end <= nextOffset){
+          endNode = node;
+          endOffset = Math.max(0, end - offset);
+          break;
+        }
+        offset = nextOffset;
+      }
+      if(!startNode) return null;
+      if(!endNode){ endNode = startNode; endOffset = startOffset; }
+      const range = document.createRange();
+      range.setStart(startNode, startOffset);
+      range.setEnd(endNode, endOffset);
+      return range;
+    }
+    function insertMarkedRange(range, cls, styles = {}, id = '', note = ''){
+      if(!range || range.collapsed) return null;
+      const mark = document.createElement('mark');
+      mark.className = cls;
+      mark.style.cssText = Object.entries(styles).map(([k, v]) => `${k}:${v}`).join(';');
+      if(id) mark.dataset.id = id;
+      if(note) mark.dataset.note = note;
+      const frag = range.extractContents();
+      if(!(frag.textContent || '').trim()) return null;
+      mark.appendChild(frag);
+      range.insertNode(mark);
+      return mark;
+    }
+    function restoreHighlightMark(root, highlight){
+      if(!root || !highlight) return false;
+      if(Number.isFinite(highlight.start) && Number.isFinite(highlight.end)){
+        try{
+          const range = createRangeFromOffsets(root, highlight.start, highlight.end);
+          if(range && insertMarkedRange(range, 'user', { backgroundColor:highlight.color }, highlight.id, highlight.note)) return true;
+        }catch{}
+      }
+      return wrapFirst(root, highlight.text, 'user', { backgroundColor:highlight.color }, highlight.id, highlight.note);
+    }
+    function rangeIntersectsMark(range, root){
+      if(!range || !root) return false;
+      return [...root.querySelectorAll('mark.user, mark.search')].some(mark => {
+        try{
+          const mr = document.createRange();
+          mr.selectNode(mark);
+          return range.compareBoundaryPoints(Range.END_TO_START, mr) < 0 && range.compareBoundaryPoints(Range.START_TO_END, mr) > 0;
+        }catch{ return false; }
+      });
+    }
+    function addHighlight(color, note = ''){
+      const s = state.pendingSelection; if(!s) return;
+      try{
+        const root = s.page.querySelector('.pageinner');
+        if(rangeIntersectsMark(s.range, root)){ toast('Selection overlaps an existing highlight'); hidePopup(); return; }
+        const offsets = getRangeOffsets(root, s.range);
+        const id = String(Date.now()) + Math.random().toString(36).slice(2, 7);
+        const range = s.range.cloneRange(); const text = s.text;
+        if(!insertMarkedRange(range, 'user', { backgroundColor:color }, id, note)) throw new Error('Could not highlight selection');
+        state.highlights.push({ id, text, color, note, page: Number(s.page.dataset.page || 1), time: Date.now(), start: offsets?.start, end: offsets?.end });
+        saveJSON(bookKey(state.activeBook) + '_highlights', state.highlights); renderHighlightsList(); hidePopup(); toast('Highlight saved');
+      }catch{ toast('Could not highlight that selection'); }
+    }
+    function clearSearch(){
+      if(state.searchBackup){
+        $$('.pageinner').forEach((n, i) => {
+          n.innerHTML = state.searchBackup[i];
+          const page = n.closest('.page');
+          if(page) page.dataset.baseHtml = state.searchBackup[i];
+        });
+      }
+      state.search = { query:'', matches:[], index:-1 }; state.searchBackup = null; bindPageEvents(); restoreFromSavedHighlights(); updatePageInfo(); el.searchCount.textContent = '0 of 0';
+    }
+    function wrapAll(root, term){
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const nodes = []; let node;
+      while(node = walker.nextNode()) nodes.push(node);
+      const marks = [];
+      nodes.forEach(textNode => {
+        const text = textNode.nodeValue, lower = text.toLowerCase(), needle = term.toLowerCase();
+        if(lower.indexOf(needle) === -1) return;
+        const frag = document.createDocumentFragment(); let i = 0;
+        while(i < text.length){ const hit = lower.indexOf(needle, i); if(hit < 0){ frag.append(text.slice(i)); break; } if(hit > i) frag.append(text.slice(i, hit)); const m = document.createElement('mark'); m.className = 'search'; m.textContent = text.slice(hit, hit + term.length); frag.appendChild(m); marks.push(m); i = hit + term.length; }
+        textNode.parentNode.replaceChild(frag, textNode);
+      });
+      return marks;
+    }
+    function search(term){
+      if(!term){ clearSearch(); return; }
+      if(!state.searchBackup) state.searchBackup = $$('.pageinner').map(n => n.innerHTML);
+      clearSearch(); state.searchBackup = $$('.pageinner').map(n => n.innerHTML); state.search.query = term;
+      const matches = [];
+      $$('.pageinner').forEach((inner, pageIndex) => { wrapAll(inner, term).forEach(() => matches.push({ pageIndex })); });
+      state.search.matches = matches; state.search.index = matches.length ? 0 : -1; updateSearchCounter(); if(matches.length) goSearch(0);
+    }
+    function updateSearchCounter(){ el.searchCount.textContent = `${state.search.matches.length ? state.search.index + 1 : 0} of ${state.search.matches.length}`; }
+    function goSearch(index){
+      const marks = $$('.search'); if(!marks.length) return;
+      state.search.index = ((index % marks.length) + marks.length) % marks.length; marks.forEach((m, i) => m.style.outline = i === state.search.index ? '3px solid color-mix(in srgb, var(--accent) 55%, white 45%)' : 'none');
+      marks[state.search.index].scrollIntoView({ behavior:'smooth', block:'center' }); updateSearchCounter();
+    }
+    function startSearch(){ if(!state.activeBook) return; el.searchbar.classList.add('on'); el.backdrop.classList.add('on'); el.searchInput.focus(); el.searchInput.select(); }
+    function closeSearch(){ clearSearch(); el.searchInput.value = ''; el.searchbar.classList.remove('on'); if(![el.bookmarksDrawer, el.highlightsDrawer, el.statsDrawer, el.helpModal].some(d => d.classList.contains('on'))) el.backdrop.classList.remove('on'); }
+    function onDoubleClickWord(){ setTimeout(() => { const sel = getCurrentSelection(); if(!sel || sel.isCollapsed) return; const word = normalizeLookupWord(sel.toString()); if(!word) return; lookupDict(word, sel); }, 0); }
+    async function lookupDict(word, sel){
+      try{
+        if(state.dictAbort) state.dictAbort.abort(); state.dictAbort = new AbortController();
+        const rect = sel.getRangeAt(0).getBoundingClientRect();
+        el.dictWord.textContent = word; el.dictPhonetic.textContent = 'Loading...'; el.dictBody.textContent = '';
+        el.dict.classList.add('on'); el.backdrop.classList.add('on');
+        positionFloatingPanel(el.dict, rect.left + scrollX + (rect.width / 2) - (el.dict.offsetWidth / 2), rect.bottom + scrollY + 12);
+        const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`, { signal: state.dictAbort.signal, referrerPolicy: 'no-referrer', credentials: 'omit', cache: 'force-cache' });
+        const data = await res.json(), entry = Array.isArray(data) ? data[0] : data, meaning = entry?.meanings?.[0], def = meaning?.definitions?.[0] || {};
+        el.dictPhonetic.textContent = entry?.phonetic || entry?.phonetics?.find(p => p.text)?.text || '';
+        el.dictBody.innerHTML = `<div style="font-weight:800;color:var(--accent);margin-bottom:6px">${escapeHtml(meaning?.partOfSpeech || 'word')}</div><div>${escapeHtml(def.definition || 'No definition found.')}</div>${def.example ? `<div style="margin-top:10px;color:var(--muted)"><strong>Example:</strong> ${escapeHtml(def.example)}</div>` : ''}`;
+      }catch{ el.dictPhonetic.textContent = ''; el.dictBody.innerHTML = `<div style="color:var(--muted)">No dictionary entry available.</div>`; }
+    }
+    function closeDict(){ el.dict.classList.remove('on'); if(![el.searchbar, el.popup, el.bookmarksDrawer, el.highlightsDrawer, el.statsDrawer, el.settingsDrawer].some(x => x.classList.contains('on'))) el.backdrop.classList.remove('on'); }
+    function renderNoteInput(){
+      if(!state.pendingSelection) return;
+      el.noteRow.classList.remove('hidden');
+      el.noteRow.classList.add('on');
+      const popupRect = el.popup.getBoundingClientRect();
+      positionFloatingPanel(el.noteRow, popupRect.left + scrollX + (popupRect.width / 2) - (el.noteRow.offsetWidth / 2), popupRect.bottom + scrollY + 12);
+      el.noteText.value = '';
+      el.noteText.focus();
+    }
+    function saveNote(){ addHighlight(state.pendingSelection?.color || '#FFD700', el.noteText.value.trim()); }
+    function addBookmark(){ if(!state.activeBook) return; const b = { page:getCurrentPage() + 1, scroll:Math.round(scrollY), time:Date.now() }; state.bookmarks.push(b); saveJSON(bookKey(state.activeBook) + '_bookmarks', state.bookmarks); renderBookmarks(); toast('Bookmark saved!'); }
+    // Toast with an "Undo" action. onUndo runs if the user clicks within ~6s.
+    function undoToast(msg, onUndo){
+      const d = document.createElement('div');
+      d.className = 'toast';
+      d.style.cssText = 'animation:none;opacity:1;display:flex;align-items:center;gap:14px;pointer-events:auto;';
+      const span = document.createElement('span');
+      span.style.flex = '1';
+      span.textContent = msg;
+      const btn = document.createElement('button');
+      btn.className = 'btn secondary';
+      btn.style.cssText = 'min-height:30px;padding:4px 12px;';
+      btn.textContent = 'Undo';
+      let done = false;
+      const finish = () => { if(done) return; done = true; clearTimeout(timer); d.remove(); };
+      btn.addEventListener('click', () => { if(done) return; done = true; clearTimeout(timer); d.remove(); try{ onUndo(); }catch(e){ console.error(e); } });
+      const timer = setTimeout(finish, 6000);
+      d.append(span, btn);
+      el.toastwrap.appendChild(d);
+    }
+    function deleteBookmark(i){
+      const realIndex = state.bookmarks.length - 1 - i;
+      const removed = state.bookmarks[realIndex];
+      if(!removed) return;
+      const bookRef = state.activeBook;
+      state.bookmarks.splice(realIndex, 1);
+      saveJSON(bookKey(bookRef) + '_bookmarks', state.bookmarks);
+      renderBookmarks();
+      undoToast('Bookmark deleted', () => {
+        if(state.activeBook !== bookRef) return;
+        state.bookmarks.splice(Math.min(realIndex, state.bookmarks.length), 0, removed);
+        saveJSON(bookKey(bookRef) + '_bookmarks', state.bookmarks);
+        renderBookmarks();
+        toast('Bookmark restored');
+      });
+    }
+    function gotoBookmark(i){
+      const b = state.bookmarks[state.bookmarks.length - 1 - i];
+      if(!b) return closeAllOverlays();
+      if(typeof b.scroll === 'number') window.scrollTo({ top:b.scroll, behavior:'smooth' });
+      else scrollToPage(b.page || 1);
+      closeAllOverlays();
+    }
+    function deleteHighlight(i){
+      const realIndex = state.highlights.length - 1 - i;
+      const removed = state.highlights[realIndex];
+      if(!removed) return;
+      const bookRef = state.activeBook;
+      state.highlights.splice(realIndex, 1);
+      saveJSON(bookKey(bookRef) + '_highlights', state.highlights);
+      renderHighlightsList();
+      restoreFromSavedHighlights();
+      undoToast('Highlight deleted', () => {
+        if(state.activeBook !== bookRef) return;
+        state.highlights.splice(Math.min(realIndex, state.highlights.length), 0, removed);
+        saveJSON(bookKey(bookRef) + '_highlights', state.highlights);
+        renderHighlightsList();
+        restoreFromSavedHighlights();
+        toast('Highlight restored');
+      });
+    }
+    function gotoHighlight(i){
+      const h = state.highlights[state.highlights.length - 1 - i];
+      if(!h) return closeAllOverlays();
+      const mark = h.id ? el.readerContent.querySelector(`mark.user[data-id="${h.id}"]`) : null;
+      if(mark) mark.scrollIntoView({ behavior:'smooth', block:'center' });
+      else scrollToPage(h.page || 1);
+      closeAllOverlays();
+    }
+    // Triggers a browser download for the given content/blob.
+    function downloadFile(filename, content, mime){
+      const blob = content instanceof Blob ? content : new Blob([content], { type: mime || 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+    function exportHighlights(format = 'txt'){
+      if(!state.activeBook) return;
+      if(!state.highlights.length){ toast('No highlights to export'); return; }
+      const bookName = state.activeBook.title || state.activeBook.filename || 'Book';
+      const safeName = (state.activeBook.title || 'book').replace(/[^a-z0-9]+/gi,'_');
+      if(format === 'json'){
+        const payload = {
+          book: bookName,
+          filename: state.activeBook.filename || '',
+          generated: new Date().toISOString(),
+          count: state.highlights.length,
+          highlights: state.highlights.map(h => ({ page:h.page || 1, text:h.text || '', color:h.color || '', note:h.note || '', time:h.time || null }))
+        };
+        downloadFile(`${safeName}_highlights.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
+        toast('Highlights exported (JSON)');
+        return;
+      }
+      if(format === 'md'){
+        const lines = [`# Highlights and Notes — ${bookName}`, '', `*Generated: ${formatTime(Date.now())}*`, ''];
+        state.highlights.forEach((h, i) => {
+          lines.push(`## ${i + 1}. Page ${h.page || 1}`);
+          lines.push('');
+          lines.push(`> ${String(h.text || '').replace(/\n/g, '\n> ')}`);
+          lines.push('');
+          if(h.color) lines.push(`- Color: \`${h.color}\``);
+          if(h.note) lines.push(`- Note: ${h.note}`);
+          lines.push('');
+        });
+        downloadFile(`${safeName}_highlights.md`, lines.join('\n'), 'text/markdown;charset=utf-8');
+        toast('Highlights exported (Markdown)');
+        return;
+      }
+      const lines = [`Highlights and Notes for ${bookName}`, `Generated: ${formatTime(Date.now())}`, ''];
+      state.highlights.forEach((h, i) => { lines.push(`${i + 1}. Page ${h.page || 1}`); lines.push(`   Highlight: ${h.text || ''}`); lines.push(`   Color: ${h.color || ''}`); if(h.note) lines.push(`   Note: ${h.note}`); lines.push(''); });
+      downloadFile(`${safeName}_highlights.txt`, lines.join('\n'), 'text/plain;charset=utf-8');
+      toast('Highlights exported');
+    }
+    // Gathers every book_reader_* key from both storages plus all IndexedDB
+    // book content into one backup object. Book content lives in IndexedDB, so
+    // it must be included or the backup would silently miss every book.
+    async function exportLibraryBackup(){
+      const backup = { type:'book_reader_backup', version:2, generated:new Date().toISOString(), local:{}, session:{}, idb:{} };
+      let count = 0;
+      try{
+        for(let i=0;i<localStorage.length;i++){
+          const k = localStorage.key(i);
+          if(k && k.startsWith('book_reader_')){ backup.local[k] = localStorage.getItem(k); count++; }
+        }
+      }catch(e){ console.error(e); }
+      try{
+        for(let i=0;i<sessionStorage.length;i++){
+          const k = sessionStorage.key(i);
+          if(k && k.startsWith('book_reader_') && !(k in backup.local)){ backup.session[k] = sessionStorage.getItem(k); count++; }
+        }
+      }catch(e){ console.error(e); }
+      try{
+        const keys = await idbAllKeys();
+        for(const k of keys){
+          const payload = await idbGetBook(k);
+          if(payload != null){ backup.idb[k] = payload; count++; }
+        }
+      }catch(e){ console.error(e); }
+      if(!count){ toast('Nothing to back up yet'); return; }
+      const stamp = new Date().toISOString().slice(0,10);
+      downloadFile(`book_reader_backup_${stamp}.json`, JSON.stringify(backup, null, 2), 'application/json;charset=utf-8');
+      toast(`Library backup exported (${count} items)`);
+    }
+    // Restores keys from a backup JSON file produced by exportLibraryBackup.
+    // Handles both v2 backups (with an `idb` section for book content) and
+    // legacy v1 backups (book content was inside `local`).
+    function importLibraryBackup(file){
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = async () => {
+        let data;
+        try{ data = JSON.parse(String(reader.result || '')); }
+        catch{ toast('Invalid backup file'); return; }
+        const localData = data && typeof data.local === 'object' && data.local ? data.local : null;
+        const sessionData = data && typeof data.session === 'object' && data.session ? data.session : null;
+        const idbData = data && typeof data.idb === 'object' && data.idb ? data.idb : null;
+        if(data && data.type !== 'book_reader_backup' && !localData && !sessionData && !idbData){
+          toast('That file is not a Book Reader backup');
+          return;
+        }
+        const localKeys = localData ? Object.keys(localData) : [];
+        const sessionKeys = sessionData ? Object.keys(sessionData) : [];
+        const idbKeys = idbData ? Object.keys(idbData) : [];
+        if(!localKeys.length && !sessionKeys.length && !idbKeys.length){ toast('Backup contained no data'); return; }
+        if(!confirm(`Restore ${localKeys.length + sessionKeys.length + idbKeys.length} item(s) from this backup? Existing entries with the same name will be overwritten.`)) return;
+        let restored = 0, failed = 0;
+        localKeys.forEach(k => {
+          if(!k.startsWith('book_reader_')) return;
+          try{ localStorage.setItem(k, localData[k]); restored++; }
+          catch(err){
+            try{ sessionStorage.setItem(k, localData[k]); restored++; }
+            catch{ failed++; }
+          }
+        });
+        sessionKeys.forEach(k => {
+          if(!k.startsWith('book_reader_') || k in (localData || {})) return;
+          try{ sessionStorage.setItem(k, sessionData[k]); restored++; }catch{ failed++; }
+        });
+        // Restore book content into IndexedDB.
+        for(const k of idbKeys){
+          try{ await idbPutBook(k, idbData[k]); restored++; }
+          catch{
+            // IndexedDB unavailable: keep the content reachable via the legacy
+            // localStorage fallback that loadPersisted still understands.
+            try{ localStorage.setItem(k, JSON.stringify(idbData[k])); restored++; }
+            catch{ failed++; }
+          }
+        }
+        if(failed){
+          showPersistBanner(`${failed} backup item(s) could not be restored (browser storage may be full). The page will reload with what was restored.`);
+        }
+        toast(`Restored ${restored} item(s). Reloading...`);
+        setTimeout(() => location.reload(), failed ? 2200 : 900);
+      };
+      reader.onerror = () => toast('Could not read backup file');
+      reader.readAsText(file);
+    }
+    // Wires the export-menu items added for backup/restore and richer annotation exports.
+    function bindExportMenuExtras(){
+      const md = document.getElementById('exportNotesMdBtn');
+      const json = document.getElementById('exportNotesJsonBtn');
+      const exportLib = document.getElementById('exportLibraryBtn');
+      const importLib = document.getElementById('importLibraryBtn');
+      const importInput = document.getElementById('importLibraryInput');
+      if(md) md.addEventListener('click', () => exportHighlights('md'));
+      if(json) json.addEventListener('click', () => exportHighlights('json'));
+      if(exportLib) exportLib.addEventListener('click', exportLibraryBackup);
+      if(importLib && importInput){
+        importLib.addEventListener('click', () => importInput.click());
+        importInput.addEventListener('change', e => { importLibraryBackup(e.target.files && e.target.files[0]); importInput.value = ''; });
+      }
+    }
+    bindExportMenuExtras();
+    function setTTSButtonState(mode = 'stopped'){
+      el.ttsPlay.innerHTML = mode === 'playing' ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>';
+    }
+    function highlightSentence(text, charIndex){
+      const chunks = text.match(/[^.!?]+[.!?]?\s*/g) || [text]; let offset = 0, sentence = '';
+      for(const chunk of chunks){ const end = offset + chunk.length; if(charIndex >= offset && charIndex <= end){ sentence = chunk.trim(); break; } offset = end; }
+      if(!sentence) return; clearTTS(); for(const page of $$('.pageinner')) if(wrapFirst(page, sentence, 'tts')) break;
+    }
+    function clearTTS(){ if(!state.tts.baseHtml) return; $$('.pageinner').forEach((n, i) => n.innerHTML = state.tts.baseHtml[i] || n.innerHTML); bindPageEvents(); restoreFromSavedHighlights(); }
+    function chunkText(text, size = 200){
+      const sentences = String(text || '').match(/[^.!?]+[.!?]+[\])'"`’”]*\s*|[^.!?]+$/g) || [text];
+      const chunks = []; let buf = '', start = 0, bufStart = 0;
+      for(const s of sentences){
+        if(!buf){ bufStart = start; }
+        if(buf && (buf.length + s.length) > size){
+          chunks.push({ text: buf, offset: bufStart });
+          buf = s; bufStart = start;
+        }else if(s.length > size * 2){
+          if(buf){ chunks.push({ text: buf, offset: bufStart }); buf = ''; }
+          for(let i = 0; i < s.length; i += size){ chunks.push({ text: s.slice(i, i + size), offset: start + i }); }
+        }else{
+          buf += s;
+        }
+        start += s.length;
+      }
+      if(buf) chunks.push({ text: buf, offset: bufStart });
+      return chunks.length ? chunks : [{ text: String(text || ''), offset: 0 }];
+    }
+    function speakChunk(){
+      if(!hasSpeechSupport()) return;
+      const q = state.tts.queue || [];
+      if(state.tts.idx >= q.length){ state.tts.utterance = null; clearTTS(); state.tts.baseHtml = null; setTTSButtonState('stopped'); stopTTSKeepAlive(); return; }
+      const chunk = q[state.tts.idx];
+      const utter = new SpeechSynthesisUtterance(chunk.text);
+      utter.rate = Number(el.ttsRate.value || 1);
+      const voice = state.tts.voices[Number(el.voiceSelect.value)] || state.tts.voices[0]; if(voice) utter.voice = voice;
+      utter.onboundary = e => { if(typeof e.charIndex === 'number') highlightSentence(state.tts.fullText || chunk.text, chunk.offset + e.charIndex); };
+      utter.onend = () => { if(state.tts.utterance !== utter) return; state.tts.idx++; speakChunk(); };
+      state.tts.utterance = utter;
+      speechSynthesis.speak(utter);
+      setTTSButtonState('playing');
+      startTTSKeepAlive();
+    }
+    function startTTSKeepAlive(){
+      stopTTSKeepAlive();
+      state.tts.keepAlive = setInterval(() => { if(hasSpeechSupport() && speechSynthesis.speaking && !speechSynthesis.paused){ speechSynthesis.pause(); speechSynthesis.resume(); } }, 12000);
+    }
+    function stopTTSKeepAlive(){ if(state.tts.keepAlive){ clearInterval(state.tts.keepAlive); state.tts.keepAlive = null; } }
+    function startTTS(){
+      if(!state.activeBook) return;
+      if(!hasSpeechSupport()) return toast('Text-to-speech is not supported in this browser.');
+      const text = (state.activeBook.fullText || state.currentPages.map(p => p.text).join('\n\n')).trim(); if(!text) return toast('Nothing to read aloud');
+      state.tts.baseHtml = $$('.pageinner').map(n => n.innerHTML);
+      state.tts.fullText = text;
+      state.tts.queue = chunkText(text, 200);
+      state.tts.idx = 0;
+      speechSynthesis.cancel();
+      speakChunk();
+    }
+    function stopSpeech(){ stopTTSKeepAlive(); if(hasSpeechSupport()) speechSynthesis.cancel(); state.tts.utterance = null; state.tts.queue = null; state.tts.idx = 0; state.tts.fullText = null; clearTTS(); state.tts.baseHtml = null; setTTSButtonState('stopped'); el.ttsPlayer.classList.remove('on');}
+    function toggleFullscreen(){ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.(); }
+    function switchDarkLight(){ if(state.settings.theme === 'night' || state.settings.theme === 'amoled' || state.settings.theme === 'ocean') applyTheme('paper'); else applyTheme('night'); }
+    async function openLibraryFromId(id){
+      const meta = state.library.find(b => b.id === id || fileKey(b.filename) === id || fileKey(b.title) === id);
+      if(!meta) return;
+      showLoading(`Opening ${meta.title || meta.filename || 'book'}...`);
+      try{
+        // loadPersisted checks memoryBooks, then IndexedDB, then legacy storage.
+        const data = await loadPersisted(meta);
+        if(!data){
+          toast('This book is no longer stored locally. Re-upload the file to read it again.');
+          return;
+        }
+        openBookData(data, false);
+        const resumeKey = bookKey(meta) + '_resume';
+        if(meta.lastScroll && !localStorage.getItem(resumeKey) && !sessionStorage.getItem(resumeKey)) window.scrollTo({ top: meta.lastScroll, behavior:'auto' });
+      }finally{
+        hideLoading();
+      }
+    }
+    function clearLibrary(){
+      if(!confirm('Clear the local library? This keeps the currently open book if any.')) return;
+      const keepRecord = state.activeBook ? toLibraryRecord(state.activeBook) : null;
+      state.library.forEach(book => { if(!keepRecord || book.id !== keepRecord.id) clearPersistedBookData(book); });
+      state.library = keepRecord ? [keepRecord] : [];
+      saveJSON(STORAGE.library, state.library);
+      renderLibrary();
+      toast(keepRecord ? 'Library cleared. Current book kept.' : 'Library cleared');
+    }
+    function initShortcuts(){
+      // Browser/Android Back button: handled by handlePopState in priority order.
+      window.addEventListener('popstate', handlePopState);
+      // Seed one history entry so the first Back press inside the app is captured.
+      pushHistoryState();
+      // When the reader view opens, add a history entry so Back returns to the library.
+      let readerWasHidden = el.readerView.classList.contains('hidden');
+      new MutationObserver(() => {
+        const hidden = el.readerView.classList.contains('hidden');
+        if(readerWasHidden && !hidden) pushHistoryState();
+        readerWasHidden = hidden;
+      }).observe(el.readerView, { attributes:true, attributeFilter:['class'] });
+      // Reveal the skip link only while it has keyboard focus.
+      if(el.skipLink){
+        el.skipLink.addEventListener('focus', () => { el.skipLink.style.transform = 'translateY(0)'; });
+        el.skipLink.addEventListener('blur', () => { el.skipLink.style.transform = 'translateY(-150%)'; });
+      }
+      document.addEventListener('keydown', e => {
+        const ctrl = e.ctrlKey || e.metaKey;
+        const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName) || document.activeElement?.isContentEditable;
+        if(e.key === '?' && !typing){ e.preventDefault(); renderHelp(); openOverlay('help'); return; }
+        if((e.key === 'z' || e.key === 'Z') && !ctrl && !e.altKey && !typing){ e.preventDefault(); toggleFocusMode(); return; }
+        if(e.key === 'Escape'){ e.preventDefault(); if(document.body.classList.contains('focus')) return setMode(false); closeAllOverlays(); return; }
+        if(ctrl && e.key.toLowerCase() === 'f'){ e.preventDefault(); if(e.shiftKey) return toggleFullscreen(); startSearch(); return; }
+        if(ctrl && e.key.toLowerCase() === 'b'){ e.preventDefault(); addBookmark(); return; }
+        if(ctrl && e.key.toLowerCase() === 'd'){ e.preventDefault(); switchDarkLight(); return; }
+        if(ctrl && e.key === '+'){ e.preventDefault(); state.settings.fontSize = clamp(state.settings.fontSize + 1, 12, 32); applyTypography(); return; }
+        if(ctrl && e.key === '-'){ e.preventDefault(); state.settings.fontSize = clamp(state.settings.fontSize - 1, 12, 32); applyTypography(); return; }
+        if(e.key === 'F11'){ e.preventDefault(); toggleFullscreen(); return; }
+        const lineStep = (() => {
+          const pi = document.querySelector('.pageinner');
+          const lh = pi ? parseFloat(getComputedStyle(pi).lineHeight) : NaN;
+          if(lh && !isNaN(lh)) return lh;
+          const fs = Number(state.settings.fontSize) || 18, lhMult = Number(state.settings.lineHeight) || 1.7;
+          return Math.max(24, fs * lhMult) || 40;
+        })();
+        if(e.key === 'ArrowDown'){ e.preventDefault(); scrollBy({ top: lineStep, behavior:'smooth' }); return; }
+        if(e.key === 'ArrowUp'){ e.preventDefault(); scrollBy({ top: -lineStep, behavior:'smooth' }); return; }
+        if(e.key === 'PageDown'){ e.preventDefault(); scrollToPage(getCurrentPage() + 2); return; }
+        if(e.key === 'PageUp'){ e.preventDefault(); scrollToPage(getCurrentPage()); return; }
+      });
+    }
+    const DEMO_FILENAME = 'demo.txt';
+    function openSample(){
+      const text = `Demo Chapter 1
+
+The sun reached through the blinds and found the page before the reader did.
+
+This demo lets you test themes, bookmarks, notes, highlights, search, and speech.
+
+Demo Chapter 2
+
+Your files stay in your browser — only words you look up in the dictionary are sent to a dictionary service.
+
+End of demo.`;
+      const pages = splitText(text, 120);
+      openBookData({ id: libraryId(DEMO_FILENAME), title:'Demo Book', filename:DEMO_FILENAME, type:'TXT', addedAt:Date.now(), addedAtLabel:formatTime(Date.now()), pages, fullText:text, totalWords:text.split(/\s+/).filter(Boolean).length, totalPages:pages.length, hasPersistedContent:false }, true, false);
+    }
+    async function openFiles(files){
+      const list = [...(files || [])].filter(Boolean);
+      if(!list.length) return;
+      if(list.length === 1) return openFile(list[0]);
+      // Open the first file; import the rest into the library so none are silently dropped.
+      await openFile(list[0]);
+      let imported = 0;
+      for(const file of list.slice(1)){
+        try{ showLoading(`Importing ${file.name}...`); await parseFile(file); imported++; }
+        catch(err){ console.error(err); toast(`Could not import ${file.name}`); }
+      }
+      hideLoading();
+      if(imported) toast(`Added ${imported} more book${imported > 1 ? 's' : ''} to your library`);
+    }
+    function bindEvents(){
+      el.fileInput.addEventListener('change', e => openFiles(e.target.files));
+      el.openFileBtn.addEventListener('click', () => el.fileInput.click());
+      el.drop.addEventListener('dragover', e => { e.preventDefault(); el.drop.classList.add('hover'); });
+      el.drop.addEventListener('dragleave', () => el.drop.classList.remove('hover'));
+      el.drop.addEventListener('drop', e => { e.preventDefault(); el.drop.classList.remove('hover'); openFiles(e.dataTransfer?.files); });
+      el.demoBtn.addEventListener('click', openSample);
+      let librarySearchDebounce = null;
+      el.librarySearch.addEventListener('input', () => {
+        if(librarySearchDebounce) clearTimeout(librarySearchDebounce);
+        librarySearchDebounce = setTimeout(() => { state.libraryFilter.query = el.librarySearch.value; renderLibrary(); }, 140);
+      });
+      el.librarySort.addEventListener('change', () => { state.libraryFilter.sort = el.librarySort.value; renderLibrary(); });
+      // Auto dark mode: stop following the OS the moment the user makes an explicit
+      // theme choice, so we never override a deliberate selection.
+      const disableAutoTheme = () => { if(state.settings.autoTheme){ state.settings.autoTheme = false; saveJSON(STORAGE.settings, state.settings); } };
+      el.themeSelect.addEventListener('change', disableAutoTheme);
+      [el.bgColor, el.fgColor, el.accentColor].forEach(c => c.addEventListener('input', disableAutoTheme));
+      el.nightModeBtn.addEventListener('click', disableAutoTheme);
+      if(window.matchMedia){
+        const mq = window.matchMedia('(prefers-color-scheme: dark)');
+        const onSchemeChange = () => applyAutoTheme();
+        mq.addEventListener ? mq.addEventListener('change', onSchemeChange) : mq.addListener(onSchemeChange);
+      }
+      applyAutoTheme();
+      el.clearLib.addEventListener('click', clearLibrary);
+      el.toLibrary.addEventListener('click', showLanding);
+      el.focusToggle.addEventListener('change', e => setMode(e.target.checked));
+      el.focusExit.addEventListener('click', () => setMode(false));
+      el.themeSelect.addEventListener('change', () => el.themeSelect.value === 'custom' ? applyCustomColors() : applyTheme(el.themeSelect.value));
+      el.bgColor.addEventListener('input', () => { state.settings.customBg = el.bgColor.value; applyCustomColors(); });
+      el.fgColor.addEventListener('input', () => { state.settings.customFg = el.fgColor.value; applyCustomColors(); });
+      el.accentColor.addEventListener('input', () => { state.settings.customAccent = el.accentColor.value; applyCustomColors(); });
+      el.nightModeBtn.addEventListener('click', switchDarkLight);
+      el.fontSelect.addEventListener('change', () => { state.settings.font = el.fontSelect.value; applyTypography(); });
+      [el.fontSize, el.lineHeight, el.letterSpacing, el.wordSpacing, el.paraSpacing, el.readingWidth].forEach(input => input.addEventListener('input', () => {
+        state.settings.fontSize = Number(el.fontSize.value);
+        state.settings.lineHeight = Number(el.lineHeight.value);
+        state.settings.letterSpacing = Number(el.letterSpacing.value);
+        state.settings.wordSpacing = Number(el.wordSpacing.value);
+        state.settings.paragraphSpacing = Number(el.paraSpacing.value);
+        state.settings.readingWidth = Number(el.readingWidth.value);
+        applyTypography();
+      }));
+      el.columnsToggle.addEventListener('change', () => { state.settings.columns = el.columnsToggle.checked; el.readerContent.classList.toggle('columns2', !!state.settings.columns); saveJSON(STORAGE.settings, state.settings); });
+      el.jumpPage.addEventListener('keydown', e => { if(e.key === 'Enter') scrollToPage(Number(el.jumpPage.value)); });
+      el.jumpPage.addEventListener('change', () => { if(el.jumpPage.value) scrollToPage(Number(el.jumpPage.value)); });
+      el.searchBtn.addEventListener('click', startSearch);
+      let searchDebounce = null;
+      el.searchInput.addEventListener('input', () => {
+        if(searchDebounce) clearTimeout(searchDebounce);
+        const val = el.searchInput.value;
+        if(!val){ search(''); return; }
+        searchDebounce = setTimeout(() => search(val), 180);
+      });
+      el.searchInput.addEventListener('keydown', e => { if(e.key === 'Enter') goSearch(state.search.index + 1); if(e.key === 'Escape') closeSearch(); });
+      el.prevMatch.addEventListener('click', () => goSearch(state.search.index - 1));
+      el.nextMatch.addEventListener('click', () => goSearch(state.search.index + 1));
+      el.closeSearch.addEventListener('click', closeSearch);
+      el.addNote.addEventListener('click', renderNoteInput);
+      el.lookupSel.addEventListener('click', openSelectionDictionary);
+      el.saveNote.addEventListener('click', saveNote);
+      el.copySel.addEventListener('click', async () => { const text = state.pendingSelection?.text || window.getSelection()?.toString().trim(); if(!text) return; try{ if(!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable'); await navigator.clipboard.writeText(text); toast('Copied selection'); }catch{ toast('Copy failed'); } });
+      el.citeSel.addEventListener('click', async () => {
+        const text = state.pendingSelection?.text || window.getSelection()?.toString().trim();
+        if(!text) return;
+        const title = state.activeBook?.title || state.activeBook?.filename || 'Untitled';
+        const page = Number(state.pendingSelection?.page?.dataset?.page) || (getCurrentPage() + 1);
+        const citation = `"${text}" — ${title}, p.${page}`;
+        try{ if(!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable'); await navigator.clipboard.writeText(citation); toast('Citation copied'); }catch{ toast('Copy failed'); }
+      });
+      el.closeDictBtn.addEventListener('click', closeDict);
+      el.dictSpeak.addEventListener('click', () => { const w=el.dictWord.innerText; if(w && hasSpeechSupport()) speechSynthesis.speak(new SpeechSynthesisUtterance(w)); });
+
+      el.bookmarkBtn.addEventListener('click', () => {
+        if(!state.activeBook) return;
+        addBookmark();
+        renderBookmarks();
+        openOverlay('bookmarks');
+      });
+      el.settingsBtn?.addEventListener('click', () => openOverlay('settings'));
+      el.highlightsBtn.addEventListener('click', () => { renderHighlightsList(); openOverlay('highlights'); });
+      el.statsBtn.addEventListener('click', () => { renderStats(); openOverlay('stats'); });
+      el.helpBtn.addEventListener('click', () => { renderHelp(); openOverlay('help'); });
+      el.helpToolbarBtn?.addEventListener('click', () => { renderHelp(); openOverlay('help'); });
+      el.focusBtn?.addEventListener('click', toggleFocusMode);
+      el.helpClose.addEventListener('click', closeAllOverlays);
+      el.ttsBtn.addEventListener('click', () => { el.ttsPlayer.classList.add('on'); if(!state.tts.utterance) startTTS(); });
+      el.ttsPlay.addEventListener('click', () => {
+        if(!hasSpeechSupport()) return toast('Text-to-speech is not supported in this browser.');
+        if(state.tts.utterance && speechSynthesis.speaking && !speechSynthesis.paused){
+          speechSynthesis.pause();
+          setTTSButtonState('paused');
+          return;
+        }
+        if(state.tts.utterance && speechSynthesis.paused){
+          speechSynthesis.resume();
+          setTTSButtonState('playing');
+          return;
+        }
+        startTTS();
+      });
+      el.ttsStop.addEventListener('click', stopSpeech);
+      el.ttsRate.addEventListener('input', () => {
+        if(state.tts.utterance && state.tts.queue){
+          const wasPaused = hasSpeechSupport() && speechSynthesis.paused;
+          state.tts.utterance = null;
+          speechSynthesis.cancel();
+          speakChunk();
+          if(wasPaused && hasSpeechSupport()){ speechSynthesis.pause(); setTTSButtonState('paused'); }
+        }
+      });
+      el.voiceSelect.addEventListener('change', () => { if(state.tts.utterance) { stopSpeech(); startTTS(); } });
+      el.exportBtn.addEventListener('click', e => { e.stopPropagation(); el.exportMenu.classList.toggle('on'); });
+      el.exportNotesBtn.addEventListener('click', exportHighlights);
+      el.printBtn.addEventListener('click', () => window.print());
+      document.querySelectorAll('.closeDrawer').forEach(btn => btn.addEventListener('click', closeAllOverlays));
+      document.addEventListener('click', e => {
+        const open = e.target.closest('[data-open-book]'); if(open) return openLibraryFromId(open.dataset.openBook);
+        const reup = e.target.closest('[data-reupload-book]'); if(reup) return el.fileInput.click();
+        const rm = e.target.closest('[data-remove-book]'); if(rm) {
+          const removeId = rm.dataset.removeBook;
+          const book = state.library.find(b => b.id === removeId);
+          if(!confirm(`Remove "${(book && (book.title || book.filename)) || 'this book'}" from the library?`)) return;
+          // Snapshot the book's persisted content/marks so the deletion can be undone.
+          const bk = bookKey(book || { id:removeId });
+          const snapshot = { record:book ? { ...book } : null, keys:{} };
+          [bk, bk + '_resume', bk + '_bookmarks', bk + '_highlights'].forEach(k => {
+            const lv = localStorage.getItem(k), sv = sessionStorage.getItem(k);
+            if(lv != null) snapshot.keys[k] = { store:'local', value:lv };
+            else if(sv != null) snapshot.keys[k] = { store:'session', value:sv };
+          });
+          const memorySnapshot = state.memoryBooks.get(bk);
+          // Snapshot IndexedDB content too, so undo can restore the bulky payload.
+          idbGetBook(bk).then(v => { snapshot.idb = v || null; }).catch(() => { snapshot.idb = null; });
+          state.library = state.library.filter(b => b.id !== removeId);
+          saveJSON(STORAGE.library, state.library);
+          clearPersistedBookData(book || { id:removeId });
+          renderLibrary();
+          if(state.activeBook && state.activeBook.id === removeId) showLanding();
+          undoToast('Book removed from library', () => {
+            Object.entries(snapshot.keys).forEach(([k, info]) => {
+              try{ (info.store === 'local' ? localStorage : sessionStorage).setItem(k, info.value); }catch{}
+            });
+            if(memorySnapshot) state.memoryBooks.set(bk, memorySnapshot);
+            if(snapshot.idb) idbPutBook(bk, snapshot.idb).catch(() => {});
+            if(snapshot.record && !state.library.some(b => b.id === snapshot.record.id)){
+              state.library.unshift(snapshot.record);
+              saveJSON(STORAGE.library, state.library);
+            }
+            renderLibrary();
+            toast('Book restored');
+          });
+          return;
+        }
+        const gb = e.target.closest('[data-goto-bookmark]'); if(gb) return gotoBookmark(Number(gb.dataset.gotoBookmark));
+        const db = e.target.closest('[data-del-bookmark]'); if(db) return deleteBookmark(Number(db.dataset.delBookmark));
+        const gh = e.target.closest('[data-goto-highlight]'); if(gh) return gotoHighlight(Number(gh.dataset.gotoHighlight));
+        const dh = e.target.closest('[data-del-highlight]'); if(dh) return deleteHighlight(Number(dh.dataset.delHighlight));
+        const color = e.target.closest('[data-color]');
+        if(color){
+          if(state.pendingSelection) state.pendingSelection.color = color.dataset.color;
+          if(el.noteRow.classList.contains('hidden')) return addHighlight(color.dataset.color);
+          toast('Color selected');
+          return;
+        }
+        if(!e.target.closest('.exportwrap')) el.exportMenu.classList.remove('on');
+        if(!e.target.closest('.drawer') && !e.target.closest('.modal') && !e.target.closest('.popup') && !e.target.closest('.dict') && !e.target.closest('.searchbar')) { if(!e.target.closest('#toolbar')) hidePopup(); }
+        // Dismiss the dictionary popup on any click outside it (mirrors selection-popup behavior).
+        if(el.dict.classList.contains('on') && !e.target.closest('.dict') && !e.target.closest('#toolbar')) closeDict();
+      });
+      el.backdrop.addEventListener('click', closeAllOverlays);
+      el.modback.addEventListener('click', closeAllOverlays);
+      document.addEventListener('selectionchange', onSelectionChange);
+      window.addEventListener('scroll', onScroll, { passive:true });
+      window.addEventListener('beforeunload', () => { saveCurrentPosition(); });
+      window.addEventListener('mousemove', () => { if(document.body.classList.contains('focus')) { el.focusExit.style.opacity = '1'; clearTimeout(el.focusExit._t); el.focusExit._t = setTimeout(() => { if(document.body.classList.contains('focus') && document.activeElement !== el.focusExit) el.focusExit.style.opacity = '0'; }, 1400); } });
+      // Keep the exit button visible whenever a keyboard user focuses it.
+      el.focusExit.addEventListener('focus', () => { if(document.body.classList.contains('focus')) el.focusExit.style.opacity = '1'; });
+      initShortcuts();
+      if(hasSpeechSupport()){
+        populateVoices();
+        speechSynthesis.onvoiceschanged = populateVoices;
+      }else{
+        el.voiceSelect.innerHTML = '<option value="">TTS unavailable</option>';
+      }
+    }
+    function syncColorPickers(){
+      el.bgColor.value = rgbToHex(getComputedStyle(document.documentElement).getPropertyValue('--page-bg').trim()) || state.settings.customBg || '#FAFAF8';
+      el.fgColor.value = rgbToHex(getComputedStyle(document.documentElement).getPropertyValue('--page-fg').trim()) || state.settings.customFg || '#1a1a1a';
+      el.accentColor.value = rgbToHex(getComputedStyle(document.documentElement).getPropertyValue('--page-accent').trim()) || state.settings.customAccent || '#C8602A';
+    }
+    function rgbToHex(str){
+      if(!str) return '#000000';
+      if(str.startsWith('#')) return str.length === 4 ? '#' + [...str.slice(1)].map(c=>c+c).join('') : str;
+      const m = str.match(/\d+/g); if(!m || m.length < 3) return '#000000';
+      return '#' + m.slice(0,3).map(n => Number(n).toString(16).padStart(2,'0')).join('');
+    }
+    function boot(){
+      populateFonts();
+      el.fontSelect.value = state.settings.font;
+      setStreak();
+      bindEvents();
+      // Autosave only while the tab is visible; backgrounded tabs do no work.
+      if(!state.autoSaveTimer) state.autoSaveTimer = setInterval(() => {
+        if(document.visibilityState === 'visible') saveCurrentPosition();
+      }, 5000);
+      // Save once when the tab is hidden so nothing is lost while autosave is paused.
+      document.addEventListener('visibilitychange', () => {
+        if(document.visibilityState === 'hidden') saveCurrentPosition();
+      });
+      if(state.settings.theme === 'custom') applyCustomColors(); else applyTheme(state.settings.theme || 'paper');
+      syncColorPickers();
+      applyTypography();
+      renderLibrary();
+      updateProgress();
+      if(!state.library.length) renderLibrary();
+      registerServiceWorker();
+      toast('Reader ready');
+    }
+    // Register the service worker for offline support / PWA install.
+    // Runs after load so it never blocks boot; fails silently if unsupported.
+    function registerServiceWorker(){
+      if(!('serviceWorker' in navigator)) return;
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
+    boot();
+  </script>
 </body>
 </html>
