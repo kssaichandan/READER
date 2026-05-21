@@ -508,6 +508,7 @@
     function cover(seed){ const h = hashString(seed) % 360; return { c1:`hsl(${h} 68% 54%)`, c2:`hsl(${(h+32)%360} 64% 40%)` }; }
     function fileKey(name){ return 'book_reader_file_' + String(name || '').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,''); }
     function libraryId(name){ return fileKey(name); }
+    function bookKey(book){ return (book && book.id) ? String(book.id) : fileKey(book && book.filename); }
     function todayKey(){ const d=new Date(), p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; }
     function yestKey(){ const d=new Date(); d.setDate(d.getDate()-1); const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; }
     function dailyPagesKey(){ return `book_reader_pages_${todayKey()}`; }
@@ -634,13 +635,13 @@
       el.libraryGrid.innerHTML = state.library.slice().sort((a,b)=> (b.lastOpenAt||0)-(a.lastOpenAt||0)).map(book => {
         const c = cover(book.filename || book.title || 'book');
         const p = clamp(book.progress || 0, 0, 100).toFixed(0);
-        const bk = fileKey(book.filename || book.id);
+        const bk = bookKey(book);
         const openable = localStorage.getItem(bk) != null || sessionStorage.getItem(bk) != null || state.memoryBooks.has(bk);
         return `<article class="librarycard"><div class="cover-spine" style="background:linear-gradient(180deg, ${c.c1}, ${c.c2})"></div><div class="card-letter">${escapeHtml((book.title || book.filename || '?').trim().charAt(0).toUpperCase())}</div><div class="body"><h3 title="${escapeHtml(book.title || book.filename || '')}">${escapeHtml(book.title || book.filename || 'Untitled')}</h3><div class="meta"><span>${escapeHtml(book.filename || '')}</span><span>Added ${escapeHtml(book.addedAtLabel || formatTime(book.addedAt || Date.now()))}</span></div><div class="bar"><span style="width:${p}%"></span></div><div class="meta">${p}% read${book.lastPage ? ` - page ${book.lastPage}` : ''}</div><div class="actions"><button class="btn" data-open-book="${escapeHtml(book.id)}">${openable ? 'Continue Reading' : 'Re-upload File'}</button><button class="btn secondary" data-remove-book="${escapeHtml(book.id)}"><i class="fa-solid fa-trash"></i></button></div></div></article>`;
       }).join('');
     }
     function toLibraryRecord(book){
-      return { id:book.id, title:book.title, filename:book.filename, type:book.type, addedAt:book.addedAt || Date.now(), addedAtLabel:book.addedAtLabel || formatTime(book.addedAt || Date.now()), lastOpenAt:Date.now(), lastPage:book.lastPage || 1, lastScroll:book.lastScroll || 0, progress:book.progress || 0, hasPersistedContent:!!book.hasPersistedContent };
+      return { id:book.id, size:book.size, title:book.title, filename:book.filename, type:book.type, addedAt:book.addedAt || Date.now(), addedAtLabel:book.addedAtLabel || formatTime(book.addedAt || Date.now()), lastOpenAt:Date.now(), lastPage:book.lastPage || 1, lastScroll:book.lastScroll || 0, progress:book.progress || 0, hasPersistedContent:!!book.hasPersistedContent };
     }
     function updateLibrary(book){
       const record = toLibraryRecord(book);
@@ -735,7 +736,7 @@
     }
     async function parseFile(file){
       const ext = (file.name.split('.').pop() || '').toLowerCase();
-      const meta = { id:libraryId(file.name), title:file.name.replace(/\.[^.]+$/,''), filename:file.name, type:ext.toUpperCase(), addedAt:Date.now(), addedAtLabel:formatTime(Date.now()), hasPersistedContent:false };
+      const meta = { id:libraryId(file.name) + '_s' + (file.size || 0), size:file.size || 0, title:file.name.replace(/\.[^.]+$/,''), filename:file.name, type:ext.toUpperCase(), addedAt:Date.now(), addedAtLabel:formatTime(Date.now()), hasPersistedContent:false };
       showLoading(`Parsing ${meta.type} book...`);
       let pages = [], fullText = '';
       if(ext === 'txt'){ fullText = String(await file.text()); pages = splitText(fullText, 500); }
@@ -751,7 +752,7 @@
       try{ return JSON.parse(JSON.stringify(book)); }catch{ return book; }
     }
     function persistBook(book){
-      const key = fileKey(book.filename);
+      const key = bookKey(book);
       const payload = { ...book, hasPersistedContent:true };
       const data = JSON.stringify(payload);
       let saved = false;
@@ -762,17 +763,16 @@
       updateLibrary(book);
       toast(book.hasPersistedContent ? `Saved ${book.title} to the library` : `Loaded ${book.title}. Large books may not persist.`);
     }
-    function loadPersisted(name){
-      const key = fileKey(name);
+    function loadPersisted(book){
+      const key = bookKey(book);
       try{ const raw = localStorage.getItem(key); if(raw) return JSON.parse(raw); }catch{}
       try{ const raw = sessionStorage.getItem(key); if(raw) return JSON.parse(raw); }catch{}
       const cached = state.memoryBooks.get(key);
       return cached ? cloneBook(cached) : null;
     }
     function clearPersistedBookData(book){
-      const name = book?.filename || book?.id;
-      if(!name) return;
-      const key = fileKey(name);
+      const key = bookKey(book);
+      if(!key) return;
       [localStorage, sessionStorage].forEach(store => {
         try{ store.removeItem(key); }catch{}
         try{ store.removeItem(key + '_resume'); }catch{}
@@ -789,7 +789,7 @@
       const scroll = Math.round(window.scrollY);
       const progress = clamp(scroll / Math.max(1, document.documentElement.scrollHeight - innerHeight) * 100, 0, 100);
       const resume = { scroll, page, progress, time: Date.now() };
-      const resumeKey = fileKey(state.activeBook.filename) + '_resume';
+      const resumeKey = bookKey(state.activeBook) + '_resume';
       try{ localStorage.setItem(resumeKey, JSON.stringify(resume)); }catch{}
       try{ sessionStorage.setItem(resumeKey, JSON.stringify(resume)); }catch{}
       state.activeBook.lastPage = page; state.activeBook.lastScroll = scroll; state.activeBook.progress = progress;
@@ -797,7 +797,7 @@
     }
     function restoreResume(){
       if(!state.activeBook) return;
-      const key = fileKey(state.activeBook.filename) + '_resume';
+      const key = bookKey(state.activeBook) + '_resume';
       const raw = localStorage.getItem(key) || sessionStorage.getItem(key);
       if(!raw) return;
       try{
@@ -886,11 +886,12 @@
       state.sessionStart = Date.now();
       state.activeBook = { ...book, hasPersistedContent: !!book.hasPersistedContent };
       state.currentPages = book.pages || [];
-      state.bookmarks = loadJSON(fileKey(book.filename) + '_bookmarks', []);
-      state.highlights = loadJSON(fileKey(book.filename) + '_highlights', []);
+      const bkey = bookKey(book);
+      state.bookmarks = loadJSON(bkey + '_bookmarks', []);
+      state.highlights = loadJSON(bkey + '_highlights', []);
       state.search = { query:'', matches:[], index:-1 };
       state.searchBackup = null;
-      state.memoryBooks.set(fileKey(book.filename), cloneBook(state.activeBook));
+      state.memoryBooks.set(bkey, cloneBook(state.activeBook));
       el.bookTitle.textContent = book.title || book.filename || 'Untitled';
       if(addToLibrary) updateLibrary(state.activeBook);
       showReader(); renderPages(); applyTypography(); renderBookmarks(); renderHighlightsList(); renderStats(); restoreFromSavedHighlights(); restoreResume(); updateProgress();
@@ -1090,7 +1091,7 @@
         const range = s.range.cloneRange(); const text = s.text;
         if(!insertMarkedRange(range, 'user', { backgroundColor:color }, id, note)) throw new Error('Could not highlight selection');
         state.highlights.push({ id, text, color, note, page: Number(s.page.dataset.page || 1), time: Date.now(), start: offsets?.start, end: offsets?.end });
-        saveJSON(fileKey(state.activeBook.filename) + '_highlights', state.highlights); renderHighlightsList(); hidePopup(); toast('Highlight saved');
+        saveJSON(bookKey(state.activeBook) + '_highlights', state.highlights); renderHighlightsList(); hidePopup(); toast('Highlight saved');
       }catch{ toast('Could not highlight that selection'); }
     }
     function clearSearch(){
@@ -1157,8 +1158,8 @@
       el.noteText.focus();
     }
     function saveNote(){ addHighlight(state.pendingSelection?.color || '#FFD700', el.noteText.value.trim()); }
-    function addBookmark(){ if(!state.activeBook) return; const b = { page:getCurrentPage() + 1, scroll:Math.round(scrollY), time:Date.now() }; state.bookmarks.push(b); saveJSON(fileKey(state.activeBook.filename) + '_bookmarks', state.bookmarks); renderBookmarks(); toast('Bookmark saved!'); }
-    function deleteBookmark(i){ state.bookmarks.splice(state.bookmarks.length - 1 - i, 1); saveJSON(fileKey(state.activeBook.filename) + '_bookmarks', state.bookmarks); renderBookmarks(); }
+    function addBookmark(){ if(!state.activeBook) return; const b = { page:getCurrentPage() + 1, scroll:Math.round(scrollY), time:Date.now() }; state.bookmarks.push(b); saveJSON(bookKey(state.activeBook) + '_bookmarks', state.bookmarks); renderBookmarks(); toast('Bookmark saved!'); }
+    function deleteBookmark(i){ state.bookmarks.splice(state.bookmarks.length - 1 - i, 1); saveJSON(bookKey(state.activeBook) + '_bookmarks', state.bookmarks); renderBookmarks(); }
     function gotoBookmark(i){
       const b = state.bookmarks[state.bookmarks.length - 1 - i];
       if(!b) return closeAllOverlays();
@@ -1166,7 +1167,7 @@
       else scrollToPage(b.page || 1);
       closeAllOverlays();
     }
-    function deleteHighlight(i){ state.highlights.splice(state.highlights.length - 1 - i, 1); saveJSON(fileKey(state.activeBook.filename) + '_highlights', state.highlights); renderHighlightsList(); restoreFromSavedHighlights(); }
+    function deleteHighlight(i){ state.highlights.splice(state.highlights.length - 1 - i, 1); saveJSON(bookKey(state.activeBook) + '_highlights', state.highlights); renderHighlightsList(); restoreFromSavedHighlights(); }
     function gotoHighlight(i){
       const h = state.highlights[state.highlights.length - 1 - i];
       if(!h) return closeAllOverlays();
@@ -1250,13 +1251,13 @@
       showLoading(`Opening ${meta.title || meta.filename || 'book'}...`);
       try{
         // loadPersisted already checks localStorage, sessionStorage, and memoryBooks.
-        const data = loadPersisted(meta.filename || meta.id);
+        const data = loadPersisted(meta);
         if(!data){
           toast('This book is no longer stored locally. Re-upload the file to read it again.');
           return;
         }
         openBookData(data, false);
-        const resumeKey = fileKey(meta.filename || meta.id) + '_resume';
+        const resumeKey = bookKey(meta) + '_resume';
         if(meta.lastScroll && !localStorage.getItem(resumeKey) && !sessionStorage.getItem(resumeKey)) window.scrollTo({ top: meta.lastScroll, behavior:'auto' });
       }finally{
         hideLoading();
