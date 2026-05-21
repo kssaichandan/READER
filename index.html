@@ -1119,7 +1119,7 @@
           text += (needsSpace ? ' ' : '') + it.str;
           last = it.str.slice(-1);
         }
-        return { text: text.trim() };
+        return { text: text.trim(), y: line.y };
       });
     }
     // Resolve a named pdf.js object. Image XObjects only populate page.objs once the
@@ -1166,33 +1166,60 @@
         return canvas.toDataURL('image/png');
       }catch(e){ return null; }
     }
-    // Extract raster images painted on a PDF page; returns an array of data URLs.
-    // The page must already have been rendered so its image XObjects are resolved.
+    // Compose two affine matrices: the result applies m, then base.
+    function mulMatrix(base, m){
+      return [
+        base[0]*m[0] + base[2]*m[1],
+        base[1]*m[0] + base[3]*m[1],
+        base[0]*m[2] + base[2]*m[3],
+        base[1]*m[2] + base[3]*m[3],
+        base[0]*m[4] + base[2]*m[5] + base[4],
+        base[1]*m[4] + base[3]*m[5] + base[5]
+      ];
+    }
+    // Extract raster images painted on a PDF page, each tagged with its vertical
+    // (y) position in PDF user space so they can be interleaved with the text in
+    // their true original order. The page must already have been rendered so its
+    // image XObjects are resolved. Tracks the transform matrix (incl. save /
+    // restore and form XObjects) to locate each painted image.
     async function extractPdfPageImages(page){
-      const urls = [];
+      const out = [];
       try{
         const opList = await page.getOperatorList();
         const fns = opList.fnArray || [], args = opList.argsArray || [];
-        const seen = new Set();
-        for(let i=0;i<fns.length;i++){
+        const OPS = pdfjsLib.OPS;
+        let ctm = [1,0,0,1,0,0];
+        const stack = [];
+        const urlCache = {};
+        for(let i=0;i<fns.length && out.length < 40;i++){
           try{
-            let img = null;
-            if(fns[i] === pdfjsLib.OPS.paintImageXObject){
+            const fn = fns[i];
+            if(fn === OPS.save){ stack.push(ctm); continue; }
+            if(fn === OPS.restore){ ctm = stack.pop() || [1,0,0,1,0,0]; continue; }
+            if(fn === OPS.transform){ ctm = mulMatrix(ctm, args[i]); continue; }
+            if(fn === OPS.paintFormXObjectBegin){ stack.push(ctm); if(args[i] && args[i][0]) ctm = mulMatrix(ctm, args[i][0]); continue; }
+            if(fn === OPS.paintFormXObjectEnd){ ctm = stack.pop() || [1,0,0,1,0,0]; continue; }
+            let key = null;
+            if(fn === OPS.paintImageXObject){
               const name = args[i] && args[i][0];
-              if(typeof name !== 'string' || seen.has(name)) continue;
-              seen.add(name);
-              img = await getPdfObj(page.objs, name);
-            } else if(fns[i] === pdfjsLib.OPS.paintInlineImageXObject){
-              img = args[i] && args[i][0];
+              if(typeof name !== 'string') continue;
+              key = name;
+              if(urlCache[name] === undefined){
+                const obj = await getPdfObj(page.objs, name);
+                urlCache[name] = (obj && (obj.width|0) >= 20 && (obj.height|0) >= 20) ? pdfImageToDataUrl(obj) : null;
+              }
+            } else if(fn === OPS.paintInlineImageXObject){
+              const inl = args[i] && args[i][0];
+              if(!inl || (inl.width|0) < 20 || (inl.height|0) < 20) continue; // skip icons / spacer pixels
+              key = '__inline_' + i;
+              urlCache[key] = pdfImageToDataUrl(inl);
             } else { continue; }
-            if(!img) continue;
-            if((img.width|0) < 20 || (img.height|0) < 20) continue; // skip icons / spacer pixels
-            const url = pdfImageToDataUrl(img);
-            if(url) urls.push(url);
+            const url = urlCache[key];
+            if(url) out.push({ url, y: Math.max(ctm[5], ctm[3] + ctm[5]) });
           }catch(e){ /* skip this image, keep going */ }
         }
       }catch(e){ /* operator list unavailable: fall back to text only */ }
-      return urls;
+      return out;
     }
     async function parsePdf(buf){
       if(!hasPdfSupport()) throw new Error('PDF support is unavailable right now. Reload the page and try again.');
@@ -1205,7 +1232,6 @@
         const content = await p.getTextContent();
         const lines = groupPdf(content.items);
         const text = lines.map(l=>l.text).join('\n');
-        let html = lines.map(l => `<p>${escapeHtml(l.text)}</p>`).join('');
         // Cheaply check whether this page actually paints any raster images,
         // so pure-text pages skip the expensive canvas render entirely.
         let hasImageOps = false;
@@ -1234,9 +1260,15 @@
         if(hasImageOps){
           try{ images = await extractPdfPageImages(p); }catch(e){ images = []; }
         }
-        if(images.length){
-          html += images.map(url => `<figure class="pdf-figure"><img src="${url}" alt="Figure from page ${i}" loading="lazy"></figure>`).join('');
-        }
+        // Interleave text lines and images by vertical position so each figure
+        // renders in its true original place within the page's text flow.
+        const flow = lines.map(l => ({ kind:'text', y:l.y, text:l.text }));
+        images.forEach(im => flow.push({ kind:'image', y:(typeof im.y === 'number' && isFinite(im.y)) ? im.y : -Infinity, url:im.url }));
+        flow.sort((a,b) => b.y - a.y);
+        let html = flow.map(it => it.kind === 'text'
+          ? `<p>${escapeHtml(it.text)}</p>`
+          : `<figure class="pdf-figure"><img src="${it.url}" alt="Figure from page ${i}" loading="lazy"></figure>`
+        ).join('');
         // Scanned-page fallback: no text and no images -> use the rendered page image.
         if(!html){
           let fallback = null;
