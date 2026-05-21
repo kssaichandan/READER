@@ -1122,18 +1122,57 @@
       if(!sentence) return; clearTTS(); for(const page of $$('.pageinner')) if(wrapFirst(page, sentence, 'tts')) break;
     }
     function clearTTS(){ if(!state.tts.baseHtml) return; $$('.pageinner').forEach((n, i) => n.innerHTML = state.tts.baseHtml[i] || n.innerHTML); bindPageEvents(); restoreFromSavedHighlights(); }
+    function chunkText(text, size = 200){
+      const sentences = String(text || '').match(/[^.!?]+[.!?]+[\])'"`’”]*\s*|[^.!?]+$/g) || [text];
+      const chunks = []; let buf = '', start = 0, bufStart = 0;
+      for(const s of sentences){
+        if(!buf){ bufStart = start; }
+        if(buf && (buf.length + s.length) > size){
+          chunks.push({ text: buf, offset: bufStart });
+          buf = s; bufStart = start;
+        }else if(s.length > size * 2){
+          if(buf){ chunks.push({ text: buf, offset: bufStart }); buf = ''; }
+          for(let i = 0; i < s.length; i += size){ chunks.push({ text: s.slice(i, i + size), offset: start + i }); }
+        }else{
+          buf += s;
+        }
+        start += s.length;
+      }
+      if(buf) chunks.push({ text: buf, offset: bufStart });
+      return chunks.length ? chunks : [{ text: String(text || ''), offset: 0 }];
+    }
+    function speakChunk(){
+      if(!hasSpeechSupport()) return;
+      const q = state.tts.queue || [];
+      if(state.tts.idx >= q.length){ state.tts.utterance = null; clearTTS(); state.tts.baseHtml = null; setTTSButtonState('stopped'); stopTTSKeepAlive(); return; }
+      const chunk = q[state.tts.idx];
+      const utter = new SpeechSynthesisUtterance(chunk.text);
+      utter.rate = Number(el.ttsRate.value || 1);
+      const voice = state.tts.voices[Number(el.voiceSelect.value)] || state.tts.voices[0]; if(voice) utter.voice = voice;
+      utter.onboundary = e => { if(typeof e.charIndex === 'number') highlightSentence(state.tts.fullText || chunk.text, chunk.offset + e.charIndex); };
+      utter.onend = () => { if(state.tts.utterance !== utter) return; state.tts.idx++; speakChunk(); };
+      state.tts.utterance = utter;
+      speechSynthesis.speak(utter);
+      setTTSButtonState('playing');
+      startTTSKeepAlive();
+    }
+    function startTTSKeepAlive(){
+      stopTTSKeepAlive();
+      state.tts.keepAlive = setInterval(() => { if(hasSpeechSupport() && speechSynthesis.speaking && !speechSynthesis.paused){ speechSynthesis.pause(); speechSynthesis.resume(); } }, 12000);
+    }
+    function stopTTSKeepAlive(){ if(state.tts.keepAlive){ clearInterval(state.tts.keepAlive); state.tts.keepAlive = null; } }
     function startTTS(){
       if(!state.activeBook) return;
       if(!hasSpeechSupport()) return toast('Text-to-speech is not supported in this browser.');
       const text = (state.activeBook.fullText || state.currentPages.map(p => p.text).join('\n\n')).trim(); if(!text) return toast('Nothing to read aloud');
       state.tts.baseHtml = $$('.pageinner').map(n => n.innerHTML);
-      const utter = new SpeechSynthesisUtterance(text); utter.rate = Number(el.ttsRate.value || 1);
-      const voice = state.tts.voices[Number(el.voiceSelect.value)] || state.tts.voices[0]; if(voice) utter.voice = voice;
-      utter.onboundary = e => { if(typeof e.charIndex === 'number') highlightSentence(text, e.charIndex); };
-      utter.onend = () => { state.tts.utterance = null; clearTTS(); state.tts.baseHtml = null; setTTSButtonState('stopped'); };
-      speechSynthesis.cancel(); speechSynthesis.speak(utter); state.tts.utterance = utter; setTTSButtonState('playing');
+      state.tts.fullText = text;
+      state.tts.queue = chunkText(text, 200);
+      state.tts.idx = 0;
+      speechSynthesis.cancel();
+      speakChunk();
     }
-    function stopSpeech(){ if(hasSpeechSupport()) speechSynthesis.cancel(); state.tts.utterance = null; clearTTS(); state.tts.baseHtml = null; setTTSButtonState('stopped'); el.ttsPlayer.classList.remove('on');}
+    function stopSpeech(){ stopTTSKeepAlive(); if(hasSpeechSupport()) speechSynthesis.cancel(); state.tts.utterance = null; state.tts.queue = null; state.tts.idx = 0; state.tts.fullText = null; clearTTS(); state.tts.baseHtml = null; setTTSButtonState('stopped'); el.ttsPlayer.classList.remove('on');}
     function toggleFullscreen(){ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.(); }
     function switchDarkLight(){ if(state.settings.theme === 'night' || state.settings.theme === 'amoled' || state.settings.theme === 'ocean') applyTheme('paper'); else applyTheme('night'); }
     function openLibraryFromId(id){
@@ -1168,7 +1207,7 @@
     function initShortcuts(){
       document.addEventListener('keydown', e => {
         const ctrl = e.ctrlKey || e.metaKey;
-        const typing = ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName) || document.activeElement?.isContentEditable;
+        const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName) || document.activeElement?.isContentEditable;
         if(e.key === '?' && !typing){ e.preventDefault(); renderHelp(); openOverlay('help'); return; }
         if(e.key === 'Escape'){ e.preventDefault(); if(document.body.classList.contains('focus')) return setMode(false); closeAllOverlays(); return; }
         if(ctrl && e.key.toLowerCase() === 'f'){ e.preventDefault(); if(e.shiftKey) return toggleFullscreen(); startSearch(); return; }
@@ -1177,8 +1216,15 @@
         if(ctrl && e.key === '+'){ e.preventDefault(); state.settings.fontSize = clamp(state.settings.fontSize + 1, 12, 32); applyTypography(); return; }
         if(ctrl && e.key === '-'){ e.preventDefault(); state.settings.fontSize = clamp(state.settings.fontSize - 1, 12, 32); applyTypography(); return; }
         if(e.key === 'F11'){ e.preventDefault(); toggleFullscreen(); return; }
-        if(e.key === 'ArrowDown'){ e.preventDefault(); scrollBy({ top: Math.max(24, parseFloat(getComputedStyle(document.body).lineHeight) || 24), behavior:'smooth' }); return; }
-        if(e.key === 'ArrowUp'){ e.preventDefault(); scrollBy({ top: -Math.max(24, parseFloat(getComputedStyle(document.body).lineHeight) || 24), behavior:'smooth' }); return; }
+        const lineStep = (() => {
+          const pi = document.querySelector('.pageinner');
+          const lh = pi ? parseFloat(getComputedStyle(pi).lineHeight) : NaN;
+          if(lh && !isNaN(lh)) return lh;
+          const fs = Number(state.settings.fontSize) || 18, lhMult = Number(state.settings.lineHeight) || 1.7;
+          return Math.max(24, fs * lhMult) || 40;
+        })();
+        if(e.key === 'ArrowDown'){ e.preventDefault(); scrollBy({ top: lineStep, behavior:'smooth' }); return; }
+        if(e.key === 'ArrowUp'){ e.preventDefault(); scrollBy({ top: -lineStep, behavior:'smooth' }); return; }
         if(e.key === 'PageDown'){ e.preventDefault(); scrollToPage(getCurrentPage() + 2); return; }
         if(e.key === 'PageUp'){ e.preventDefault(); scrollToPage(getCurrentPage()); return; }
       });
@@ -1236,7 +1282,7 @@ End of sample.`;
       el.addNote.addEventListener('click', renderNoteInput);
       el.lookupSel.addEventListener('click', openSelectionDictionary);
       el.saveNote.addEventListener('click', saveNote);
-      el.copySel.addEventListener('click', async () => { const text = state.pendingSelection?.text || window.getSelection()?.toString().trim(); if(text) { try{ await navigator.clipboard?.writeText?.(text); }catch{} toast('Copied selection'); } });
+      el.copySel.addEventListener('click', async () => { const text = state.pendingSelection?.text || window.getSelection()?.toString().trim(); if(!text) return; try{ if(!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable'); await navigator.clipboard.writeText(text); toast('Copied selection'); }catch{ toast('Copy failed'); } });
       el.closeDictBtn.addEventListener('click', closeDict);
       el.dictSpeak.addEventListener('click', () => { const w=el.dictWord.innerText; if(w && hasSpeechSupport()) speechSynthesis.speak(new SpeechSynthesisUtterance(w)); });
 
@@ -1267,7 +1313,15 @@ End of sample.`;
         startTTS();
       });
       el.ttsStop.addEventListener('click', stopSpeech);
-      el.ttsRate.addEventListener('input', () => { if(state.tts.utterance) state.tts.utterance.rate = Number(el.ttsRate.value); });
+      el.ttsRate.addEventListener('input', () => {
+        if(state.tts.utterance && state.tts.queue){
+          const wasPaused = hasSpeechSupport() && speechSynthesis.paused;
+          state.tts.utterance = null;
+          speechSynthesis.cancel();
+          speakChunk();
+          if(wasPaused && hasSpeechSupport()){ speechSynthesis.pause(); setTTSButtonState('paused'); }
+        }
+      });
       el.voiceSelect.addEventListener('change', () => { if(state.tts.utterance) { stopSpeech(); startTTS(); } });
       el.exportBtn.addEventListener('click', e => { e.stopPropagation(); el.exportMenu.classList.toggle('on'); });
       el.exportNotesBtn.addEventListener('click', exportHighlights);
