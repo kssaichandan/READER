@@ -1146,16 +1146,22 @@
       if(state.activeBook.id === libraryId('demo.txt')) return;
       const page = getCurrentPage() + 1;
       const scroll = Math.round(window.scrollY);
+      // Skip redundant work: the position has not moved since the last save.
+      if(state.lastSavedScroll === scroll && state.lastSavedPage === page) return;
       const progress = clamp(scroll / Math.max(1, document.documentElement.scrollHeight - innerHeight) * 100, 0, 100);
-      const resume = { scroll, page, progress, time: Date.now() };
+      const resume = JSON.stringify({ scroll, page, progress, time: Date.now() });
       const resumeKey = bookKey(state.activeBook) + '_resume';
-      try{ localStorage.setItem(resumeKey, JSON.stringify(resume)); }catch{}
-      try{ sessionStorage.setItem(resumeKey, JSON.stringify(resume)); }catch{}
+      try{ localStorage.setItem(resumeKey, resume); }catch{}
+      try{ sessionStorage.setItem(resumeKey, resume); }catch{}
       state.activeBook.lastPage = page; state.activeBook.lastScroll = scroll; state.activeBook.progress = progress;
+      state.lastSavedScroll = scroll; state.lastSavedPage = page;
       updateLibrary(state.activeBook);
     }
     function restoreResume(){
       if(!state.activeBook) return;
+      // A different book is now active: reset the save-dedup markers so the first
+      // saveCurrentPosition for this book is never skipped as a no-op.
+      state.lastSavedScroll = null; state.lastSavedPage = null;
       const key = bookKey(state.activeBook) + '_resume';
       const raw = localStorage.getItem(key) || sessionStorage.getItem(key);
       if(!raw) return;
@@ -1218,18 +1224,40 @@
     }
     function updatePageInfo(){ const total = pageEls().length; if(!total) return void (el.pageInfo.textContent = 'Page 0 / 0'); const page = getCurrentPage() + 1; el.pageInfo.textContent = `Page ${page} / ${total}`; }
     function updateProgress(){ const max = Math.max(1, document.documentElement.scrollHeight - innerHeight); el.progressBar.style.width = clamp(window.scrollY / max * 100, 0, 100) + '%'; updatePageInfo(); renderStats(); }
-    function onScroll(){ if(state.scrollRaf) cancelAnimationFrame(state.scrollRaf); state.scrollRaf = requestAnimationFrame(() => { updateProgress(); trackStats(); }); }
+    // Run low-priority work when the browser is idle; fall back to a short timeout.
+    function runWhenIdle(fn){
+      if(typeof requestIdleCallback === 'function') requestIdleCallback(fn, { timeout: 1000 });
+      else setTimeout(fn, 200);
+    }
+    function onScroll(){ if(state.scrollRaf) cancelAnimationFrame(state.scrollRaf); state.scrollRaf = requestAnimationFrame(() => { state.scrollRaf = null; state.inScrollFrame = true; try{ updateProgress(); trackStats(); } finally{ state.inScrollFrame = false; } }); }
+    // trackStats only updates an in-memory page set on the scroll hot path; the
+    // localStorage write is debounced and deferred to an idle callback.
     function trackStats(){
       if(!state.activeBook) return;
       const page = getCurrentPage() + 1;
       const key = state.activeBook.id + ':' + page;
-      const todayPages = loadJSON(dailyPagesKey(), []);
-      if(!todayPages.includes(key)){
-        todayPages.push(key);
-        saveJSON(dailyPagesKey(), todayPages);
-        state.stats.pagesReadToday = todayPages.length;
-        saveJSON(STORAGE.stats, state.stats);
+      if(state.trackedPagesKey !== dailyPagesKey()){
+        // New day (or first call): reload the persisted set once, then keep it in memory.
+        state.trackedPagesKey = dailyPagesKey();
+        state.trackedPages = new Set(loadJSON(dailyPagesKey(), []));
       }
+      if(state.trackedPages.has(key)) return;
+      state.trackedPages.add(key);
+      state.stats.pagesReadToday = state.trackedPages.size;
+      scheduleStatsPersist();
+    }
+    // Coalesce repeated trackStats writes into a single deferred localStorage flush.
+    function scheduleStatsPersist(){
+      if(state.statsPersistPending) return;
+      state.statsPersistPending = true;
+      runWhenIdle(() => {
+        state.statsPersistPending = false;
+        if(!state.trackedPages || state.trackedPagesKey !== dailyPagesKey()) return;
+        try{
+          saveJSON(state.trackedPagesKey, [...state.trackedPages]);
+          saveJSON(STORAGE.stats, state.stats);
+        }catch{}
+      });
     }
     function getWordsRead(){ return state.currentPages.slice(0, getCurrentPage() + 1).reduce((s, p) => s + (p.words || 0), 0); }
     function renderPages(){
@@ -1281,6 +1309,11 @@
       bindPageEvents();
     }
     function renderStats(){
+      // renderStats runs on every scroll frame via updateProgress; the stats drawer
+      // and progress ring are hidden unless the drawer is open, so skip all of that
+      // DOM work (innerHTML rebuild included) on the scroll hot path when the drawer
+      // is closed. Direct calls (e.g. opening the drawer) always render.
+      if(state.inScrollFrame && !el.statsDrawer?.classList.contains('on')) return;
       const p = Math.round(clamp(state.activeBook?.progress||0,0,100)); if(el.progressText) el.progressText.textContent=p+'%'; if(el.progressRing) el.progressRing.style.strokeDashoffset = 314 - (314 * p / 100);
       if(el.streakFlame) el.streakFlame.textContent = state.stats.streak || 0;
       const totalWords = state.activeBook?.totalWords || 0;
@@ -2069,7 +2102,14 @@ End of demo.`;
       el.fontSelect.value = state.settings.font;
       setStreak();
       bindEvents();
-      if(!state.autoSaveTimer) state.autoSaveTimer = setInterval(() => saveCurrentPosition(), 5000);
+      // Autosave only while the tab is visible; backgrounded tabs do no work.
+      if(!state.autoSaveTimer) state.autoSaveTimer = setInterval(() => {
+        if(document.visibilityState === 'visible') saveCurrentPosition();
+      }, 5000);
+      // Save once when the tab is hidden so nothing is lost while autosave is paused.
+      document.addEventListener('visibilitychange', () => {
+        if(document.visibilityState === 'hidden') saveCurrentPosition();
+      });
       if(state.settings.theme === 'custom') applyCustomColors(); else applyTheme(state.settings.theme || 'paper');
       syncColorPickers();
       applyTypography();
