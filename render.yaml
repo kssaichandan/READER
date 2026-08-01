@@ -1,5 +1,6 @@
-staticSites:
-  - name: local-book-reader
+services:
+  - type: web
+    name: local-book-reader
     runtime: static
     plan: free
     staticPublishPath: .
