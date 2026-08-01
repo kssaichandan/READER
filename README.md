@@ -10,7 +10,9 @@ It is built as a lightweight local-first reader with support for uploading files
 
 ## Live Link
 
-https://reader-dljp.onrender.com
+Deploy the contents of this folder to any static host (Render, Netlify, GitHub Pages).
+
+Example Render service is configured in `render.yaml` — push this folder to a Git repo and connect it to Render as a static site.
 
 ## What This Is
 
@@ -61,21 +63,38 @@ The app runs on the client side in the browser.
 
 ## Tech Stack
 
-- single, self-contained HTML file with inline CSS and vanilla JavaScript — no build step and no framework
-- [pdf.js](https://mozilla.github.io/pdf.js/) for rendering PDF documents
-- [JSZip](https://stuk.github.io/jszip/) for unpacking EPUB archives
-- [epub.js](https://github.com/futurepress/epub.js/) for parsing and rendering EPUB content
-- browser `localStorage` for persistence and the Web Speech API for read-aloud
+- Minimal static HTML, CSS and vanilla JavaScript — no build step
+
+This simplified starter removes the heavy inlined app and provides a clean UI you can extend. PDF/EPUB parsing is out of scope for this minimal redesign; add back libraries like `pdf.js` or `epub.js` if you need full support.
 
 ## Browser Support
 
 Works in modern evergreen browsers (recent Chrome, Edge, Firefox and Safari) with JavaScript enabled. PDF and EPUB rendering depend on the browser-side libraries above; read-aloud depends on the browser's Web Speech API support.
 
-## Local Run Command
+## Local Run
 
-```powershell
-Start-Process ".\index.html"
+Open `index.html` in your browser or serve this folder from a static host.
+
+Example (serve locally with Python):
+
+```bash
+python -m http.server 8000
 ```
+
+Git push instructions
+
+Run these commands from the project root to push to your repository (replace remote URL):
+
+```bash
+git init
+git add .
+git commit -m "Minimal reader: responsive UI + PDF/EPUB support"
+git branch -M main
+git remote add origin <your-repo-url>
+git push -u origin main
+```
+
+Note: I cannot push to your remote from here — run the commands above on your machine or give me repository access/token and I can prepare a script for you.
 
 ## Storage
 

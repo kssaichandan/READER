@@ -1,7 +1,7 @@
 /* Service Worker for Local Book Reader — offline support + PWA.
    Bump CACHE_VERSION on every deploy that changes cached assets so old
    caches are cleaned up on activate. */
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const SHELL_CACHE = 'reader-shell-' + CACHE_VERSION;
 const RUNTIME_CACHE = 'reader-runtime-' + CACHE_VERSION;
 
@@ -9,6 +9,8 @@ const RUNTIME_CACHE = 'reader-runtime-' + CACHE_VERSION;
 const SHELL_ASSETS = [
   './',
   'index.html',
+  'styles.css',
+  'app.js',
   'manifest.json',
   'icon.svg'
 ];
